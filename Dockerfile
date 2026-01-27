@@ -22,18 +22,17 @@ ENV PATH=/root/.local/bin:$PATH
 COPY app/ ./app/
 COPY public/ ./public/
 COPY run.py .
-COPY start.sh .
+COPY start.py .
 
-# Create data directory for SQLite and make script executable
-RUN mkdir -p /app/data && chmod +x /app/start.sh
+# Create data directory for SQLite
+RUN mkdir -p /app/data
 
 # Set environment variables
 ENV FLASK_APP=run.py
 ENV FLASK_ENV=production
 ENV PYTHONUNBUFFERED=1
-ENV PORT=5000
 
 EXPOSE 5000
 
-# Run startup script
-CMD ["/app/start.sh"]
+# Run Python startup script (avoids shell variable issues)
+CMD ["python", "start.py"]
