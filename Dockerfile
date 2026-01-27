@@ -22,9 +22,10 @@ ENV PATH=/root/.local/bin:$PATH
 COPY app/ ./app/
 COPY public/ ./public/
 COPY run.py .
+COPY start.sh .
 
-# Create data directory for SQLite
-RUN mkdir -p /app/data
+# Create data directory for SQLite and make script executable
+RUN mkdir -p /app/data && chmod +x /app/start.sh
 
 # Set environment variables
 ENV FLASK_APP=run.py
@@ -34,5 +35,5 @@ ENV PORT=5000
 
 EXPOSE 5000
 
-# Run with gunicorn - use shell form for variable expansion
-CMD ["sh", "-c", "gunicorn --preload --bind 0.0.0.0:${PORT:-5000} --workers 2 --threads 4 --timeout 120 run:app"]
+# Run startup script
+CMD ["/app/start.sh"]
