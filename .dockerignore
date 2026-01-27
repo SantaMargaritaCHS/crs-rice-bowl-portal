@@ -1,26 +1,41 @@
-# Ignore git metadata
+# Git
 .git
 .gitignore
 
-# Node / frontend dependencies (if added later)
-node_modules
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-store
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+venv/
+.venv/
+*.egg-info/
 
-# Environment / config
+# Database (will be created fresh)
+data/*.db
+
+# Environment
 .env
 .env.*
 
-# Editor / OS files
+# Editor / OS
 *.swp
 *.swo
 .DS_Store
 Thumbs.db
+.idea/
+.vscode/
 
-# Build artifacts (adjust as your stack evolves)
+# Build artifacts
 dist
 build
 out
 coverage
+
+# Local files
+cookies.txt
+*.log
+
+# Railway/Docker local
+.omc/
+docker-compose.yml
+nginx.conf
