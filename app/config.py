@@ -23,6 +23,14 @@ class Config:
     SQLALCHEMY_DATABASE_URI = database_url or f'sqlite:///{BASE_DIR / "data" / "crs.db"}'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # Connection pool settings for Railway PostgreSQL reliability
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,      # Test connections before use (fixes SSL stale errors)
+        'pool_recycle': 300,         # Recycle connections every 5 minutes
+        'pool_size': 5,
+        'max_overflow': 10,
+    }
+
     # Debug mode
     DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() in ('true', '1', 'yes')
 
