@@ -52,8 +52,18 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>Class Name</th>
-                            <th style="width: 250px;">Amount ($)</th>
+                            <th>
+                                Class Name
+                                <button type="button" class="btn btn-sm btn-link p-0 ms-1 sort-btn" data-sort="name" data-order="asc" title="Sort by name">
+                                    <i class="bi bi-sort-alpha-down"></i>
+                                </button>
+                            </th>
+                            <th style="width: 250px;">
+                                Amount ($)
+                                <button type="button" class="btn btn-sm btn-link p-0 ms-1 sort-btn" data-sort="amount" data-order="desc" title="Sort by amount">
+                                    <i class="bi bi-sort-numeric-down-alt"></i>
+                                </button>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -169,6 +179,43 @@
 
         inputs.forEach(input => {
             input.addEventListener('input', updateRiceBowlTotal);
+        });
+
+        // Sorting functionality
+        const sortButtons = document.querySelectorAll('.sort-btn');
+        sortButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const sortBy = this.dataset.sort;
+                const tbody = document.querySelector('.table tbody');
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+
+                // Toggle order
+                const currentOrder = this.dataset.order;
+                const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+                this.dataset.order = newOrder;
+
+                // Update icon
+                if (sortBy === 'name') {
+                    this.querySelector('i').className = newOrder === 'asc' ? 'bi bi-sort-alpha-down' : 'bi bi-sort-alpha-up';
+                } else {
+                    this.querySelector('i').className = newOrder === 'asc' ? 'bi bi-sort-numeric-down' : 'bi bi-sort-numeric-down-alt';
+                }
+
+                rows.sort((a, b) => {
+                    let valA, valB;
+                    if (sortBy === 'name') {
+                        valA = a.querySelector('td strong').textContent.trim().toLowerCase();
+                        valB = b.querySelector('td strong').textContent.trim().toLowerCase();
+                        return newOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                    } else {
+                        valA = parseFloat(a.querySelector('input[name^="class_"]').value) || 0;
+                        valB = parseFloat(b.querySelector('input[name^="class_"]').value) || 0;
+                        return newOrder === 'asc' ? valA - valB : valB - valA;
+                    }
+                });
+
+                rows.forEach(row => tbody.appendChild(row));
+            });
         });
     });
 </script>

@@ -33,7 +33,7 @@
 
             <div class="mb-3">
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="enabled" name="enabled" value="true" checked>
+                    <input class="form-check-input" type="checkbox" id="enabled" name="enabled" value="on" checked>
                     <label class="form-check-label" for="enabled">
                         <strong>Enable this announcement</strong>
                     </label>
@@ -167,7 +167,7 @@
 
                     <div class="mb-3">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="edit_enabled" name="enabled" value="true">
+                            <input class="form-check-input" type="checkbox" id="edit_enabled" name="enabled" value="on">
                             <label class="form-check-label" for="edit_enabled">
                                 <strong>Enable this announcement</strong>
                             </label>
@@ -232,7 +232,7 @@
                         document.getElementById('edit_end_at').value = data.end_at;
                         document.getElementById('edit_enabled').checked = data.enabled;
 
-                        document.getElementById('editForm').action = `{{ url_for('admin_bp.edit_announcement', announcement_id=0) }}`.replace('0', announcementId);
+                        document.getElementById('editForm').action = `{{ url_for('admin_bp.update_announcement', id=0) }}`.replace('0', announcementId);
 
                         editModal.show();
                     })
@@ -269,7 +269,7 @@
             btn.addEventListener('click', function() {
                 const announcementId = this.dataset.announcementId;
 
-                document.getElementById('deleteForm').action = `{{ url_for('admin_bp.delete_announcement', announcement_id=0) }}`.replace('0', announcementId);
+                document.getElementById('deleteForm').action = `{{ url_for('admin_bp.delete_announcement', id=0) }}`.replace('0', announcementId);
 
                 deleteModal.show();
             });

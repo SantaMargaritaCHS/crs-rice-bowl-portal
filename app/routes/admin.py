@@ -205,14 +205,16 @@ def totals():
     online_total = float(Setting.get('online_total', '0') or '0')
     classes = SchoolClass.query.order_by(SchoolClass.name).all()
     rice_bowl_total = sum(c.rice_bowl_amount for c in classes)
+    show_grand_total = Setting.get('show_grand_total', 'false') == 'true'
 
     return render_template(
         'admin/totals.html',
-        crs_link=crs_link,
-        online_total=online_total,
+        crs_donation_link=crs_link,
+        online_alms_total=online_total,
         classes=classes,
         rice_bowl_total=rice_bowl_total,
         grand_total=online_total + rice_bowl_total,
+        show_grand_total=show_grand_total,
     )
 
 
@@ -224,7 +226,7 @@ def update_totals():
     """
     try:
         crs_link = request.form.get('crs_donation_link', '').strip()
-        online_total_str = request.form.get('online_total', '0').strip()
+        online_total_str = request.form.get('online_alms_total', '0').strip()
 
         # Validate online total
         try:
@@ -237,6 +239,24 @@ def update_totals():
 
         Setting.set('crs_donation_link', crs_link)
         Setting.set('online_total', str(online_total))
+
+        # Save show_grand_total setting
+        show_grand_total = request.form.get('show_grand_total') == 'true'
+        Setting.set('show_grand_total', 'true' if show_grand_total else 'false')
+
+        # Save individual class amounts
+        classes = SchoolClass.query.all()
+        for school_class in classes:
+            amount_key = f'class_{school_class.id}_amount'
+            amount_str = request.form.get(amount_key, '').strip()
+            if amount_str:
+                try:
+                    amount = float(amount_str)
+                    if amount >= 0:
+                        school_class.rice_bowl_amount = amount
+                except ValueError:
+                    pass
+        db.session.commit()
 
         flash('Totals updated successfully.', 'success')
 
@@ -543,6 +563,40 @@ def update_announcement(id: int):
         flash(f'Error updating announcement: {str(e)}', 'error')
 
     return redirect(url_for('admin_bp.announcements'))
+
+
+@admin_bp.route('/announcements/<int:announcement_id>/json', methods=['GET'])
+@login_required
+def get_announcement(announcement_id: int):
+    """Get a single announcement as JSON for the edit modal."""
+    from flask import jsonify
+    announcement = Announcement.query.get(announcement_id)
+    if not announcement:
+        return jsonify({'error': 'Not found'}), 404
+    return jsonify({
+        'id': announcement.id,
+        'text': announcement.text,
+        'start_at': announcement.start_at.strftime('%Y-%m-%dT%H:%M') if announcement.start_at else '',
+        'end_at': announcement.end_at.strftime('%Y-%m-%dT%H:%M') if announcement.end_at else '',
+        'enabled': announcement.enabled,
+    })
+
+
+@admin_bp.route('/announcements/<int:announcement_id>/toggle', methods=['POST'])
+@login_required
+def toggle_announcement(announcement_id: int):
+    """Toggle an announcement's enabled status."""
+    from flask import jsonify
+    announcement = Announcement.query.get(announcement_id)
+    if not announcement:
+        return jsonify({'success': False, 'error': 'Not found'}), 404
+    try:
+        announcement.enabled = not announcement.enabled
+        db.session.commit()
+        return jsonify({'success': True, 'enabled': announcement.enabled})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @admin_bp.route('/announcements/<int:id>/delete', methods=['POST'])
