@@ -48,6 +48,14 @@
         </div>
         <div class="card-body">
             {% if classes %}
+            <!-- Search Filter -->
+            <div class="mb-3">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="classSearch" placeholder="Search classes...">
+                    <span class="input-group-text text-muted" id="classCount">{{ classes|length }} classes</span>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
@@ -165,6 +173,11 @@
 <script>
     // Auto-calculate rice bowl total as user types
     document.addEventListener('DOMContentLoaded', function() {
+        // Helper function to strip title prefixes for sorting
+        function getSortName(name) {
+            return name.replace(/^(Mr\.|Mrs\.|Ms\.)\s*/i, '').toLowerCase();
+        }
+
         const inputs = document.querySelectorAll('input[name^="class_"]');
         const riceBowlTotal = document.getElementById('rice_bowl_total_display');
 
@@ -179,6 +192,30 @@
 
         inputs.forEach(input => {
             input.addEventListener('input', updateRiceBowlTotal);
+        });
+
+        // Search filter functionality
+        const searchInput = document.getElementById('classSearch');
+        const classCountDisplay = document.getElementById('classCount');
+        const tableBody = document.querySelector('.table tbody');
+        const allRows = Array.from(tableBody.querySelectorAll('tr'));
+        const totalClasses = allRows.length;
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            let visibleCount = 0;
+
+            allRows.forEach(row => {
+                const className = row.querySelector('td strong').textContent.toLowerCase();
+                if (className.includes(searchTerm)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            classCountDisplay.textContent = `${visibleCount} of ${totalClasses} classes`;
         });
 
         // Sorting functionality
@@ -204,8 +241,8 @@
                 rows.sort((a, b) => {
                     let valA, valB;
                     if (sortBy === 'name') {
-                        valA = a.querySelector('td strong').textContent.trim().toLowerCase();
-                        valB = b.querySelector('td strong').textContent.trim().toLowerCase();
+                        valA = getSortName(a.querySelector('td strong').textContent.trim());
+                        valB = getSortName(b.querySelector('td strong').textContent.trim());
                         return newOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
                     } else {
                         valA = parseFloat(a.querySelector('input[name^="class_"]').value) || 0;

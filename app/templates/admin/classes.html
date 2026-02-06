@@ -33,12 +33,30 @@
     </div>
     <div class="card-body">
         {% if classes %}
+        <!-- Search Filter -->
+        <div class="mb-3">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="classSearch" placeholder="Search classes...">
+                <span class="input-group-text text-muted" id="classCount">{{ classes|length }} classes</span>
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th style="width: 60%;">Class Name</th>
-                        <th>Donation Amount</th>
+                        <th style="width: 60%;">
+                            Class Name
+                            <button type="button" class="btn btn-sm btn-link p-0 ms-1 sort-btn" data-sort="name" data-order="asc" title="Sort by name">
+                                <i class="bi bi-sort-alpha-down"></i>
+                            </button>
+                        </th>
+                        <th>
+                            Donation Amount
+                            <button type="button" class="btn btn-sm btn-link p-0 ms-1 sort-btn" data-sort="amount" data-order="desc" title="Sort by amount">
+                                <i class="bi bi-sort-numeric-down-alt"></i>
+                            </button>
+                        </th>
                         <th style="width: 200px;">Actions</th>
                     </tr>
                 </thead>
@@ -128,6 +146,72 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Helper function to strip title prefixes for sorting
+        function getSortName(name) {
+            return name.replace(/^(Mr\.|Mrs\.|Ms\.)\s*/i, '').toLowerCase();
+        }
+
+        // Search filter functionality
+        const searchInput = document.getElementById('classSearch');
+        const classCountDisplay = document.getElementById('classCount');
+        const tableBody = document.querySelector('.table tbody');
+        const allRows = Array.from(tableBody.querySelectorAll('tr'));
+        const totalClasses = allRows.length;
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            let visibleCount = 0;
+
+            allRows.forEach(row => {
+                const className = row.querySelector('.class-name-display').textContent.toLowerCase();
+                if (className.includes(searchTerm)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            classCountDisplay.textContent = `${visibleCount} of ${totalClasses} classes`;
+        });
+
+        // Sorting functionality
+        const sortButtons = document.querySelectorAll('.sort-btn');
+        sortButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const sortBy = this.dataset.sort;
+                const currentOrder = this.dataset.order;
+                const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+                this.dataset.order = newOrder;
+
+                // Update icon
+                if (sortBy === 'name') {
+                    this.querySelector('i').className = newOrder === 'asc' ? 'bi bi-sort-alpha-down' : 'bi bi-sort-alpha-up';
+                } else {
+                    this.querySelector('i').className = newOrder === 'asc' ? 'bi bi-sort-numeric-down' : 'bi bi-sort-numeric-down-alt';
+                }
+
+                const visibleRows = allRows.filter(row => row.style.display !== 'none');
+
+                visibleRows.sort((a, b) => {
+                    let valA, valB;
+                    if (sortBy === 'name') {
+                        valA = getSortName(a.querySelector('.class-name-display').textContent.trim());
+                        valB = getSortName(b.querySelector('.class-name-display').textContent.trim());
+                        return newOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                    } else {
+                        const badgeA = a.querySelector('.badge').textContent.trim();
+                        const badgeB = b.querySelector('.badge').textContent.trim();
+                        valA = parseFloat(badgeA.replace('$', '')) || 0;
+                        valB = parseFloat(badgeB.replace('$', '')) || 0;
+                        return newOrder === 'asc' ? valA - valB : valB - valA;
+                    }
+                });
+
+                visibleRows.forEach(row => tableBody.appendChild(row));
+            });
+        });
+
         // Edit functionality
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', function() {
