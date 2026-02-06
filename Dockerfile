@@ -23,6 +23,7 @@ COPY app/ ./app/
 COPY public/ ./public/
 COPY run.py .
 COPY start.py .
+COPY seed_classes.py .
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data
