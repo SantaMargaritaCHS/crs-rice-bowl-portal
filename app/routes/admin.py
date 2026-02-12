@@ -96,7 +96,7 @@ def dashboard():
             next_quiz = quiz
 
     # Calculate totals
-    online_total = float(Setting.get('online_total', '0') or '0')
+    online_total = float(Setting.get('online_alms_total', '0') or '0')
     classes = SchoolClass.query.order_by(SchoolClass.name).all()
     rice_bowl_total = sum(c.rice_bowl_amount for c in classes)
     grand_total = online_total + rice_bowl_total
@@ -202,19 +202,19 @@ def totals():
     Show CRS link, online total, and rice bowl totals by class.
     """
     crs_link = Setting.get('crs_donation_link', '')
-    online_total = float(Setting.get('online_total', '0') or '0')
+    online_total = float(Setting.get('online_alms_total', '0') or '0')
+    show_grand_total = Setting.get('show_grand_total', 'false') == 'true'
     classes = SchoolClass.query.order_by(SchoolClass.name).all()
     rice_bowl_total = sum(c.rice_bowl_amount for c in classes)
-    show_grand_total = Setting.get('show_grand_total', 'false') == 'true'
 
     return render_template(
         'admin/totals.html',
         crs_donation_link=crs_link,
         online_alms_total=online_total,
+        show_grand_total=show_grand_total,
         classes=classes,
         rice_bowl_total=rice_bowl_total,
         grand_total=online_total + rice_bowl_total,
-        show_grand_total=show_grand_total,
     )
 
 
@@ -237,11 +237,10 @@ def update_totals():
             flash('Please enter a valid number for online total.', 'error')
             return redirect(url_for('admin_bp.totals'))
 
-        Setting.set('crs_donation_link', crs_link)
-        Setting.set('online_total', str(online_total))
-
-        # Save show_grand_total setting
         show_grand_total = request.form.get('show_grand_total') == 'true'
+
+        Setting.set('crs_donation_link', crs_link)
+        Setting.set('online_alms_total', str(online_total))
         Setting.set('show_grand_total', 'true' if show_grand_total else 'false')
 
         # Save individual class amounts

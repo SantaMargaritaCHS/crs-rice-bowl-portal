@@ -117,3 +117,22 @@ git push origin main
 - Grand total = Online Alms + Class Donations
 - Thermometer displays grand total without a target goal
 - Quiz visibility controlled by schedule_mode (auto/manual)
+
+---
+
+## Developer Tools
+
+### Codanna (Semantic Code Search)
+- **Index location**: `.codanna/` (gitignored)
+- **Re-index**: `codanna index .` (run after major code changes)
+- **MCP server**: Connected via Claude Code MCP (auto-available in sessions)
+- **Usage**: Semantic search, symbol lookup, call graph analysis, impact analysis
+
+### Beads (Issue Tracker)
+- **Database**: `.beads/` (git-tracked)
+- **Commands**: Run `bd` from project root
+  - `bd new "title"` - Create issue
+  - `bd list` - List open issues
+  - `bd show <id>` - View issue details
+  - `bd close <id>` - Close issue
+  - `bd comment <id> "text"` - Add comment
