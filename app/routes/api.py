@@ -181,7 +181,7 @@ def _determine_current_week() -> int:
 
     # Find the latest quiz that has closed
     for quiz in reversed(quizzes):
-        if quiz.schedule_mode == 'scheduled' and quiz.closes_at:
+        if quiz.schedule_mode in ('scheduled', 'auto') and quiz.closes_at:
             if now > quiz.closes_at:
                 # Return next week (capped at max week + 1)
                 return min(quiz.week_number + 1, max(q.week_number for q in quizzes))

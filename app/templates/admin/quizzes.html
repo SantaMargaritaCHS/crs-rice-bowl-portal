@@ -30,9 +30,9 @@
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label for="forms_link_{{ week }}" class="form-label">Google Forms Link</label>
+                            <label for="forms_link_{{ week }}" class="form-label">Quiz Link (Microsoft Forms / Google Forms)</label>
                             <input type="url" class="form-control" id="forms_link_{{ week }}" name="forms_link"
-                                   value="{{ quizzes[week - 1].forms_link if quizzes and week <= quizzes|length else '' }}" placeholder="https://forms.gle/...">
+                                   value="{{ quizzes[week - 1].forms_link if quizzes and week <= quizzes|length else '' }}" placeholder="https://forms.office.com/... or https://forms.gle/...">
                         </div>
                     </div>
 
@@ -143,7 +143,7 @@
         <ul class="mb-0">
             <li><strong>Automatic Mode:</strong> Quiz visibility is controlled by Opens/Closes dates</li>
             <li><strong>Manual Mode:</strong> Check "Manually set as visible" to show the quiz immediately</li>
-            <li><strong>Google Forms Link:</strong> Get the shareable link from your Google Form</li>
+            <li><strong>Quiz Link:</strong> Paste the direct link from Microsoft Forms or Google Forms. Do NOT paste links from Teams messages (SafeLinks URLs won't work).</li>
             <li><strong>Winners:</strong> Enter names after quiz completion to display on public page</li>
         </ul>
     </div>

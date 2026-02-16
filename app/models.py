@@ -76,7 +76,7 @@ class Quiz(db.Model):
         """
         if self.schedule_mode == 'manual':
             return self.manual_visible
-        elif self.schedule_mode == 'scheduled':
+        elif self.schedule_mode in ('scheduled', 'auto'):
             now = datetime.utcnow()
             if self.opens_at and self.closes_at:
                 return self.opens_at <= now <= self.closes_at

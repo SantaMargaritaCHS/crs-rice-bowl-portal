@@ -150,11 +150,22 @@ def update_quiz(week: int):
         # Basic fields
         quiz.country_name = request.form.get('country_name', '').strip() or f'Week {week}'
         quiz.description = request.form.get('description', '').strip() or None
-        quiz.forms_link = request.form.get('forms_link', '').strip() or None
+
+        # Validate quiz link - detect Microsoft Teams SafeLinks wrapper URLs
+        forms_link = request.form.get('forms_link', '').strip() or None
+        if forms_link and 'safelinks' in forms_link.lower():
+            flash(
+                'The quiz link appears to be a Microsoft Teams SafeLinks wrapper URL, '
+                'not the actual quiz link. Please copy the direct link from Microsoft Forms '
+                '(it should start with https://forms.office.com/ or https://forms.microsoft.com/).',
+                'error'
+            )
+            return redirect(url_for('admin_bp.quizzes'))
+        quiz.forms_link = forms_link
 
         # Schedule fields
         quiz.schedule_mode = request.form.get('schedule_mode', 'manual')
-        quiz.manual_visible = request.form.get('manual_visible') == 'on'
+        quiz.manual_visible = 'manual_visible' in request.form
 
         # Parse datetime fields
         opens_at_str = request.form.get('opens_at', '').strip()
