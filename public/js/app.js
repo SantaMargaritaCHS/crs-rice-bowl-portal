@@ -151,11 +151,18 @@ function setCRSLinks(link) {
  * Display online alms total
  */
 function displayOnlineAlms(amount) {
-  const element = document.getElementById('online-alms-total');
-  if (!element) return;
-
   const formatted = formatCurrency(parseFloat(amount) || 0);
-  element.textContent = formatted;
+
+  // Update both online total displays
+  const elements = [
+    document.getElementById('online-total'),
+    document.getElementById('online-total-display')
+  ];
+
+  elements.forEach(el => {
+    if (el) el.textContent = formatted;
+  });
+
   console.log(`💰 Online alms total: ${formatted}`);
 }
 
@@ -163,7 +170,7 @@ function displayOnlineAlms(amount) {
  * Display active announcements
  */
 function displayAnnouncements(announcements) {
-  const container = document.getElementById('announcements-container');
+  const container = document.getElementById('announcements');
   if (!container) return;
 
   const activeAnnouncements = announcements.filter(a => a.enabled);
@@ -215,13 +222,16 @@ function populateQuizSection(quiz) {
     descElement.textContent = quiz.description || '';
   }
 
-  // Quiz link
-  const linkElement = document.getElementById('quiz-link');
-  if (linkElement && quiz.forms_link) {
-    linkElement.href = quiz.forms_link;
-    linkElement.style.display = 'inline-block';
-  } else if (linkElement) {
-    linkElement.style.display = 'none';
+  // Quiz link - set on the Take the Quiz button
+  const quizBtn = document.getElementById('quiz-btn');
+  if (quizBtn && quiz.forms_link) {
+    quizBtn.addEventListener('click', () => {
+      window.open(quiz.forms_link, '_blank', 'noopener,noreferrer');
+    });
+    quizBtn.style.display = 'inline-block';
+    quizBtn.style.cursor = 'pointer';
+  } else if (quizBtn) {
+    quizBtn.style.display = 'none';
   }
 
   // Participant count
@@ -231,7 +241,7 @@ function populateQuizSection(quiz) {
   }
 
   // Participant list
-  const listElement = document.getElementById('participant-list');
+  const listElement = document.getElementById('participants-list');
   if (listElement) {
     listElement.textContent = ''; // Clear existing
 
@@ -250,7 +260,7 @@ function populateQuizSection(quiz) {
   }
 
   // Winners
-  const winnersElement = document.getElementById('winners-list');
+  const winnersElement = document.getElementById('winners');
   if (winnersElement) {
     if (quiz.winners && quiz.winners.length > 0) {
       winnersElement.textContent = ''; // Clear existing
@@ -280,7 +290,7 @@ function startCountdown(closesAt) {
     clearInterval(appState.countdownInterval);
   }
 
-  const countdownElement = document.getElementById('countdown-timer');
+  const countdownElement = document.getElementById('countdown');
   if (!countdownElement) return;
 
   const closeDate = new Date(closesAt);
@@ -321,7 +331,7 @@ function startCountdown(closesAt) {
  * Build past weeks accordion
  */
 function buildPastWeeksAccordion(quizzes, currentWeek) {
-  const container = document.getElementById('past-weeks-accordion');
+  const container = document.querySelector('#past-weeks .past-weeks-content');
   if (!container) return;
 
   const pastWeeks = quizzes
@@ -595,8 +605,8 @@ function updateThermometer(grandTotal) {
  * Display grand total (conditionally)
  */
 function displayGrandTotal(data, showGrandTotal) {
-  const container = document.getElementById('grand-total-section');
-  const element = document.getElementById('grand-total');
+  const container = document.getElementById('grand-total');
+  const element = document.getElementById('grand-total-amount');
 
   if (!container || !element) return;
 
