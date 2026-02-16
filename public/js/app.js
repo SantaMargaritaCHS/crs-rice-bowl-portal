@@ -171,37 +171,57 @@ function displayOnlineAlms(amount) {
  */
 function displayAnnouncements(announcements) {
   const container = document.getElementById('announcements');
-  if (!container) return;
-
   const activeAnnouncements = announcements.filter(a => a.enabled);
 
+  // Remove any existing top banner
+  const existingBanner = document.getElementById('announcement-top-banner');
+  if (existingBanner) existingBanner.remove();
+
   if (activeAnnouncements.length === 0) {
-    container.style.display = 'none';
+    if (container) container.style.display = 'none';
     return;
   }
 
-  container.style.display = 'block';
+  // Create top banner (visible immediately on page load)
+  const nav = document.querySelector('.main-nav');
+  if (nav && activeAnnouncements.length > 0) {
+    const banner = document.createElement('div');
+    banner.id = 'announcement-top-banner';
+    banner.className = 'announcement-bar';
+    banner.textContent = activeAnnouncements.map(a => a.text).join(' | ');
 
-  // Clear existing content
-  container.textContent = '';
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'close-btn';
+    closeBtn.textContent = '\u00d7';
+    closeBtn.setAttribute('aria-label', 'Dismiss announcement');
+    closeBtn.addEventListener('click', () => banner.remove());
+    banner.appendChild(closeBtn);
 
-  // Create announcement elements safely
-  activeAnnouncements.forEach(a => {
-    const announcementDiv = document.createElement('div');
-    announcementDiv.className = 'announcement';
+    nav.insertAdjacentElement('afterend', banner);
+  }
 
-    const iconSpan = document.createElement('span');
-    iconSpan.className = 'announcement-icon';
-    iconSpan.textContent = '📢';
+  // Also populate the bottom announcements section
+  if (container) {
+    container.style.display = 'block';
+    container.textContent = '';
 
-    const textSpan = document.createElement('span');
-    textSpan.className = 'announcement-text';
-    textSpan.textContent = a.text;
+    activeAnnouncements.forEach(a => {
+      const announcementDiv = document.createElement('div');
+      announcementDiv.className = 'announcement';
 
-    announcementDiv.appendChild(iconSpan);
-    announcementDiv.appendChild(textSpan);
-    container.appendChild(announcementDiv);
-  });
+      const iconSpan = document.createElement('span');
+      iconSpan.className = 'announcement-icon';
+      iconSpan.textContent = '\ud83d\udce2';
+
+      const textSpan = document.createElement('span');
+      textSpan.className = 'announcement-text';
+      textSpan.textContent = a.text;
+
+      announcementDiv.appendChild(iconSpan);
+      announcementDiv.appendChild(textSpan);
+      container.appendChild(announcementDiv);
+    });
+  }
 
   console.log(`📢 Displayed ${activeAnnouncements.length} announcement(s)`);
 }
