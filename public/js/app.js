@@ -189,6 +189,14 @@ function displayAnnouncements(announcements) {
     banner.id = 'announcement-top-banner';
     banner.className = 'announcement-bar';
     banner.textContent = activeAnnouncements.map(a => a.text).join(' | ');
+    banner.style.cursor = 'pointer';
+    banner.addEventListener('click', (e) => {
+      if (e.target.classList.contains('close-btn')) return;
+      const quizSection = document.getElementById('quiz');
+      if (quizSection) {
+        quizSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
 
     const closeBtn = document.createElement('button');
     closeBtn.className = 'close-btn';
