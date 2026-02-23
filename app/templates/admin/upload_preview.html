@@ -1,0 +1,145 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Upload Preview{% endblock %}
+{% block page_title %}Upload Preview - {{ filename }}{% endblock %}
+
+{% block content %}
+{% if is_duplicate %}
+<div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle"></i>
+    <strong>Duplicate detected:</strong> This file appears to have been uploaded before.
+    Check the box below to upload anyway.
+</div>
+{% endif %}
+
+{% if matched %}
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <i class="bi bi-check-circle"></i> Matched Classes ({{ matched|length }})
+        - Adding ${{ "%.2f"|format(total_to_add) }} total
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Class</th>
+                        <th class="text-end">Current Amount</th>
+                        <th class="text-end">Amount to Add</th>
+                        <th class="text-end">New Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in matched %}
+                    <tr>
+                        <td><strong>{{ item.class_name }}</strong></td>
+                        <td class="text-end">${{ "%.2f"|format(item.current_amount) }}</td>
+                        <td class="text-end text-success">+${{ "%.2f"|format(item.add_amount) }}</td>
+                        <td class="text-end"><strong>${{ "%.2f"|format(item.new_total) }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="table-active">
+                        <td><strong>Total</strong></td>
+                        <td></td>
+                        <td class="text-end"><strong>+${{ "%.2f"|format(total_to_add) }}</strong></td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if unmatched %}
+<div class="card mb-4">
+    <div class="card-header bg-warning text-dark">
+        <i class="bi bi-exclamation-triangle"></i> Unmatched Rows ({{ unmatched|length }}) - Will Be Skipped
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Teacher</th>
+                        <th>Period</th>
+                        <th class="text-end">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in unmatched %}
+                    <tr class="table-warning">
+                        <td>{{ item.teacher }}</td>
+                        <td>P{{ item.period }}</td>
+                        <td class="text-end">${{ "%.2f"|format(item.amount) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <small class="text-muted">These rows could not be matched to any class in the system. Check that class names and periods are set up correctly.</small>
+    </div>
+</div>
+{% endif %}
+
+{% if skipped_rows %}
+<div class="card mb-4">
+    <div class="card-header bg-secondary text-white">
+        <i class="bi bi-skip-forward"></i> Skipped Rows ({{ skipped_rows|length }})
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Row #</th>
+                        <th>Teacher</th>
+                        <th>Period</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in skipped_rows %}
+                    <tr>
+                        <td>{{ item.row }}</td>
+                        <td>{{ item.teacher }}</td>
+                        <td>{{ item.period }}</td>
+                        <td class="text-muted">{{ item.reason }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if matched %}
+<form method="POST" action="{{ url_for('admin_bp.confirm_upload_totals') }}">
+    {% if is_duplicate %}
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="force_upload" name="force_upload" value="true">
+        <label class="form-check-label" for="force_upload">
+            <strong>I understand this file was uploaded before. Apply it anyway.</strong>
+        </label>
+    </div>
+    {% endif %}
+    <div class="d-flex justify-content-between">
+        <a href="{{ url_for('admin_bp.totals') }}" class="btn btn-outline-secondary btn-lg">
+            <i class="bi bi-x-circle"></i> Cancel
+        </a>
+        <button type="submit" class="btn btn-success btn-lg">
+            <i class="bi bi-check-circle"></i> Confirm & Apply
+        </button>
+    </div>
+</form>
+{% else %}
+<div class="d-flex justify-content-start">
+    <a href="{{ url_for('admin_bp.totals') }}" class="btn btn-outline-secondary btn-lg">
+        <i class="bi bi-arrow-left"></i> Back to Totals
+    </a>
+</div>
+{% endif %}
+{% endblock %}

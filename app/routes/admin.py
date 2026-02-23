@@ -2,6 +2,9 @@
 Admin routes for backend management.
 Provides authentication, dashboard, and CRUD operations for all models.
 """
+import hashlib
+import json
+import re
 from datetime import datetime
 from functools import wraps
 from flask import (
@@ -306,6 +309,228 @@ def update_class_total(class_id: int):
     except Exception as e:
         db.session.rollback()
         flash(f'Error updating class total: {str(e)}', 'error')
+
+    return redirect(url_for('admin_bp.totals'))
+
+
+@admin_bp.route('/totals/upload', methods=['POST'])
+@login_required
+def upload_totals():
+    """
+    Parse an uploaded Excel file and show a preview of amounts to add.
+    Expected format: row 1 = title, row 2 = headers, row 3+ = data.
+    Column 13 (N) = teacher last name, column 12 (M) = period, column 15 (P) = amount.
+    """
+    from openpyxl import load_workbook
+    from io import BytesIO
+
+    file = request.files.get('excel_file')
+    if not file or not file.filename:
+        flash('Please select an Excel file to upload.', 'error')
+        return redirect(url_for('admin_bp.totals'))
+
+    if not file.filename.lower().endswith('.xlsx'):
+        flash('Please upload a .xlsx file.', 'error')
+        return redirect(url_for('admin_bp.totals'))
+
+    try:
+        file_bytes = file.read()
+
+        # Deduplication: check file hash
+        file_hash = hashlib.sha256(file_bytes).hexdigest()
+        upload_hashes_json = Setting.get('upload_hashes', '[]')
+        try:
+            upload_hashes = json.loads(upload_hashes_json)
+        except (json.JSONDecodeError, TypeError):
+            upload_hashes = []
+
+        is_duplicate = file_hash in upload_hashes
+
+        # Parse Excel
+        wb = load_workbook(filename=BytesIO(file_bytes), read_only=True, data_only=True)
+        ws = wb.active
+
+        # Aggregate amounts by (teacher_last_name, period_number)
+        aggregated = {}
+        skipped_rows = []
+        for row_idx, row in enumerate(ws.iter_rows(min_row=3, values_only=True), start=3):
+            # Ensure row has enough columns
+            if len(row) < 16:
+                continue
+
+            teacher_raw = row[13]  # Column N (0-indexed: 13)
+            period_raw = row[12]   # Column M (0-indexed: 12)
+            amount_raw = row[15]   # Column P (0-indexed: 15)
+
+            if not teacher_raw or not period_raw or not amount_raw:
+                continue
+
+            teacher_name = str(teacher_raw).strip()
+            period_str = str(period_raw).strip()
+
+            # Parse period number from formats like "P1", "P6", "1", etc.
+            period_match = re.match(r'P?(\d+)', period_str, re.IGNORECASE)
+            if not period_match:
+                skipped_rows.append({
+                    'row': row_idx,
+                    'teacher': teacher_name,
+                    'period': period_str,
+                    'reason': f'Cannot parse period: "{period_str}"',
+                })
+                continue
+
+            period_num = int(period_match.group(1))
+
+            # Parse amount
+            try:
+                amount_str = str(amount_raw).replace('$', '').replace(',', '').strip()
+                amount = float(amount_str)
+            except (ValueError, TypeError):
+                skipped_rows.append({
+                    'row': row_idx,
+                    'teacher': teacher_name,
+                    'period': period_str,
+                    'reason': f'Cannot parse amount: "{amount_raw}"',
+                })
+                continue
+
+            if amount <= 0:
+                continue
+
+            key = (teacher_name.lower(), period_num)
+            if key not in aggregated:
+                aggregated[key] = {
+                    'teacher': teacher_name,
+                    'period': period_num,
+                    'amount': 0.0,
+                }
+            aggregated[key]['amount'] += amount
+
+        wb.close()
+
+        if not aggregated:
+            flash('No valid donation rows found in the uploaded file.', 'error')
+            return redirect(url_for('admin_bp.totals'))
+
+        # Match to SchoolClass records
+        # Build lookup: "Mr. Bilash's Period 1" -> key ("bilash", 1)
+        classes = SchoolClass.query.all()
+        class_lookup = {}
+        for sc in classes:
+            match = re.match(
+                r"(?:Mr\.|Mrs\.|Ms\.)\s+(.+?)(?:'s|'|'s|')\s+Period\s+(\d+)",
+                sc.name
+            )
+            if match:
+                last_name = match.group(1).lower()
+                period = int(match.group(2))
+                class_lookup[(last_name, period)] = sc
+
+        matched = []
+        unmatched = []
+        for key, data in aggregated.items():
+            teacher_lower, period_num = key
+            # Try to find a matching class by checking if teacher name is contained
+            found = None
+            for (cls_name, cls_period), sc in class_lookup.items():
+                if cls_period == period_num and cls_name in teacher_lower:
+                    found = sc
+                    break
+                elif cls_period == period_num and teacher_lower in cls_name:
+                    found = sc
+                    break
+
+            if found:
+                matched.append({
+                    'class_id': found.id,
+                    'class_name': found.name,
+                    'current_amount': found.rice_bowl_amount,
+                    'add_amount': round(data['amount'], 2),
+                    'new_total': round(found.rice_bowl_amount + data['amount'], 2),
+                })
+            else:
+                unmatched.append({
+                    'teacher': data['teacher'],
+                    'period': data['period'],
+                    'amount': round(data['amount'], 2),
+                })
+
+        # Store in session for the confirm step
+        session['upload_preview'] = {
+            'matched': matched,
+            'unmatched': unmatched,
+            'skipped_rows': skipped_rows,
+            'file_hash': file_hash,
+            'is_duplicate': is_duplicate,
+            'filename': file.filename,
+        }
+
+        return render_template(
+            'admin/upload_preview.html',
+            matched=matched,
+            unmatched=unmatched,
+            skipped_rows=skipped_rows,
+            is_duplicate=is_duplicate,
+            filename=file.filename,
+            total_to_add=sum(m['add_amount'] for m in matched),
+        )
+
+    except Exception as e:
+        flash(f'Error reading Excel file: {str(e)}', 'error')
+        return redirect(url_for('admin_bp.totals'))
+
+
+@admin_bp.route('/totals/upload/confirm', methods=['POST'])
+@login_required
+def confirm_upload_totals():
+    """
+    Apply the previewed upload amounts to class totals.
+    Adds amounts to existing values (never replaces).
+    """
+    preview = session.pop('upload_preview', None)
+    if not preview:
+        flash('Upload session expired. Please upload the file again.', 'error')
+        return redirect(url_for('admin_bp.totals'))
+
+    # Check dedup unless force override
+    force = request.form.get('force_upload') == 'true'
+    if preview['is_duplicate'] and not force:
+        flash('This file was already uploaded. Check the box to upload anyway.', 'error')
+        return redirect(url_for('admin_bp.totals'))
+
+    try:
+        total_added = 0.0
+        classes_updated = 0
+
+        for item in preview['matched']:
+            sc = SchoolClass.query.get(item['class_id'])
+            if sc:
+                sc.rice_bowl_amount = round(sc.rice_bowl_amount + item['add_amount'], 2)
+                total_added += item['add_amount']
+                classes_updated += 1
+
+        db.session.commit()
+
+        # Record file hash for dedup (keep last 20)
+        upload_hashes_json = Setting.get('upload_hashes', '[]')
+        try:
+            upload_hashes = json.loads(upload_hashes_json)
+        except (json.JSONDecodeError, TypeError):
+            upload_hashes = []
+
+        if preview['file_hash'] not in upload_hashes:
+            upload_hashes.append(preview['file_hash'])
+            upload_hashes = upload_hashes[-20:]  # Keep last 20
+            Setting.set('upload_hashes', json.dumps(upload_hashes))
+
+        flash(
+            f'Added ${total_added:,.2f} across {classes_updated} classes from "{preview["filename"]}".',
+            'success',
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error applying upload: {str(e)}', 'error')
 
     return redirect(url_for('admin_bp.totals'))
 
