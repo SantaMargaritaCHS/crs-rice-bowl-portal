@@ -1,9 +1,9 @@
 # CRS Lenten Alms Portal
 
 **Project**: Santa Margarita Catholic High School Lenten Almsgiving Portal
-**Repository**: https://github.com/maizoro87/crs-rice-bowl-portal
+**Repository**: https://github.com/SantaMargaritaCHS/crs-rice-bowl-portal
 **Deployed**: Railway (auto-deploys on push to main)
-**Last Updated**: February 3, 2026
+**Last Updated**: February 23, 2026
 
 ---
 
@@ -11,7 +11,7 @@
 
 | Resource | Value |
 |----------|-------|
-| Live Site | Check Railway dashboard |
+| Live Site | https://ricebowl.up.railway.app |
 | Admin Panel | /admin (login required) |
 | Database | PostgreSQL on Railway |
 | Framework | Flask + SQLAlchemy |
@@ -92,13 +92,24 @@ git push origin main
 ### Bug Fixes
 - Fixed quiz saving (form action URL was incorrect)
 
+### February 23 - Excel Upload for Class Donation Totals
+- Added `openpyxl` dependency for Excel parsing
+- New upload flow: Admin uploads `.xlsx` payment form export -> preview -> confirm
+- Parses teacher last name (col N), period (col M), amount (col P) from row 3+
+- Matches to `SchoolClass` via case-insensitive last name + period number
+- Amounts are **added** to existing totals (never replaced)
+- SHA-256 file hash dedup prevents double-counting same file
+- Files: `admin.py` (2 new routes), `totals.html` (upload card), `upload_preview.html` (new)
+
 ---
 
 ## Admin Pages
 
 - `/admin/` - Dashboard with stats
 - `/admin/classes` - Manage participating classes
-- `/admin/totals` - Set donation amounts per class
+- `/admin/totals` - Set donation amounts per class + Excel upload
+- `/admin/totals/upload` - Upload payment form export (.xlsx)
+- `/admin/totals/upload/confirm` - Confirm and apply uploaded amounts
 - `/admin/quizzes` - Configure weekly quizzes
 - `/admin/announcements` - Manage announcements
 
@@ -117,6 +128,8 @@ git push origin main
 - Grand total = Online Alms + Class Donations
 - Thermometer displays grand total without a target goal
 - Quiz visibility controlled by schedule_mode (auto/manual)
+- Excel upload column mapping: col 12=period, col 13=teacher, col 15=amount (0-indexed)
+- Upload dedup hashes stored in `Setting` key `upload_hashes` (JSON list, keeps last 20)
 
 ---
 
