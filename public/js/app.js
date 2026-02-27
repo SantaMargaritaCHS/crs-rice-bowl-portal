@@ -617,8 +617,8 @@ function updateThermometer(grandTotal) {
   totalElement.textContent = formatCurrency(amount);
 
   // Calculate fill percentage (cap at 100%)
-  // Using a reasonable max of $10,000 for visual scaling, but no hard limit
-  const maxForVisual = 10000;
+  // Using a goal of $5,000 for visual scaling
+  const maxForVisual = 5000;
   const fillPercent = Math.min((amount / maxForVisual) * 100, 100);
 
   // Animate the fill

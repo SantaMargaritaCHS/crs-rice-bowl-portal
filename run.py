@@ -3,6 +3,8 @@ Application entry point for the CRS Rice Bowl application.
 """
 import os
 import sys
+import threading
+import urllib.request
 
 # Startup logging for Railway debugging
 print(f"[STARTUP] Python version: {sys.version}", flush=True)
@@ -25,7 +27,7 @@ print("[STARTUP] Flask app created successfully!", flush=True)
 
 # Log database state
 with app.app_context():
-    from app.models import SchoolClass, Quiz, db
+    from app.models import SchoolClass, Quiz, Setting, Announcement, db
     class_count = SchoolClass.query.count()
     quiz_count = Quiz.query.count()
     print(f"[STARTUP] Classes in DB: {class_count}", flush=True)
@@ -49,6 +51,71 @@ with app.app_context():
         except Exception as e:
             print(f"[STARTUP] Auto-seed failed: {e}", flush=True)
             db.session.rollback()
+
+    # One-time migration: convert existing quiz/announcement datetimes
+    # from Pacific Time (stored naively) to proper UTC.
+    if not Setting.get('tz_migration_done'):
+        print("[STARTUP] Running timezone migration (PT -> UTC)...", flush=True)
+        try:
+            from zoneinfo import ZoneInfo
+            PACIFIC = ZoneInfo('America/Los_Angeles')
+            UTC = ZoneInfo('UTC')
+
+            migrated = 0
+            for quiz in Quiz.query.all():
+                changed = False
+                if quiz.opens_at:
+                    aware_pt = quiz.opens_at.replace(tzinfo=PACIFIC)
+                    quiz.opens_at = aware_pt.astimezone(UTC).replace(tzinfo=None)
+                    changed = True
+                if quiz.closes_at:
+                    aware_pt = quiz.closes_at.replace(tzinfo=PACIFIC)
+                    quiz.closes_at = aware_pt.astimezone(UTC).replace(tzinfo=None)
+                    changed = True
+                if changed:
+                    migrated += 1
+
+            for ann in Announcement.query.all():
+                changed = False
+                if ann.start_at:
+                    aware_pt = ann.start_at.replace(tzinfo=PACIFIC)
+                    ann.start_at = aware_pt.astimezone(UTC).replace(tzinfo=None)
+                    changed = True
+                if ann.end_at:
+                    aware_pt = ann.end_at.replace(tzinfo=PACIFIC)
+                    ann.end_at = aware_pt.astimezone(UTC).replace(tzinfo=None)
+                    changed = True
+                if changed:
+                    migrated += 1
+
+            Setting.set('tz_migration_done', 'true')
+            db.session.commit()
+            print(f"[STARTUP] Timezone migration complete: {migrated} records updated", flush=True)
+        except Exception as e:
+            print(f"[STARTUP] Timezone migration failed: {e}", flush=True)
+            db.session.rollback()
+
+# Keep-alive self-ping to prevent Railway from idling the service.
+# This ensures scheduled quizzes go live at the right time.
+def _keep_alive():
+    """Ping our own health endpoint every 10 minutes to prevent idle shutdown."""
+    port = os.environ.get('PORT', '5000')
+    url = f'http://localhost:{port}/api/health'
+    try:
+        urllib.request.urlopen(url, timeout=10)
+    except Exception:
+        pass  # Server might not be ready yet; that's fine
+    # Schedule next ping
+    timer = threading.Timer(600, _keep_alive)  # 10 minutes
+    timer.daemon = True
+    timer.start()
+
+# Start keep-alive after a 30-second delay (let gunicorn boot first)
+_startup_timer = threading.Timer(30, _keep_alive)
+_startup_timer.daemon = True
+_startup_timer.start()
+print("[STARTUP] Keep-alive self-ping scheduled (every 10 minutes)", flush=True)
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

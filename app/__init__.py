@@ -2,11 +2,16 @@
 Flask application factory for CRS Rice Bowl application.
 """
 import os
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 from flask import Flask, send_from_directory
 from flask_login import LoginManager
 from app.config import Config
 from app.models import db, User
+
+PACIFIC = ZoneInfo('America/Los_Angeles')
+UTC = ZoneInfo('UTC')
 
 
 def create_app(config_class=Config) -> Flask:
@@ -58,6 +63,25 @@ def create_app(config_class=Config) -> Flask:
 
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(admin_bp, url_prefix='/admin')
+
+    # Jinja filters for Pacific Time display
+    @app.template_filter('to_pacific')
+    def to_pacific_filter(dt):
+        """Convert a naive UTC datetime to Pacific Time formatted for datetime-local input."""
+        if dt is None:
+            return ''
+        utc_dt = dt.replace(tzinfo=UTC)
+        pacific_dt = utc_dt.astimezone(PACIFIC)
+        return pacific_dt.strftime('%Y-%m-%dT%H:%M')
+
+    @app.template_filter('to_pacific_display')
+    def to_pacific_display_filter(dt):
+        """Convert a naive UTC datetime to Pacific Time formatted for human display."""
+        if dt is None:
+            return 'Not set'
+        utc_dt = dt.replace(tzinfo=UTC)
+        pacific_dt = utc_dt.astimezone(PACIFIC)
+        return pacific_dt.strftime('%b %d, %Y %I:%M %p PT')
 
     # Serve index.html at root
     @app.route('/')

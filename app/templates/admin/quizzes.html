@@ -43,15 +43,15 @@
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="opens_at_{{ week }}" class="form-label">Opens At</label>
+                            <label for="opens_at_{{ week }}" class="form-label">Opens At (Pacific Time)</label>
                             <input type="datetime-local" class="form-control" id="opens_at_{{ week }}" name="opens_at"
-                                   value="{{ quizzes[week - 1].opens_at.strftime('%Y-%m-%dT%H:%M') if quizzes and week <= quizzes|length and quizzes[week - 1].opens_at else '' }}">
+                                   value="{{ quizzes[week - 1].opens_at | to_pacific if quizzes and week <= quizzes|length and quizzes[week - 1].opens_at else '' }}">
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label for="closes_at_{{ week }}" class="form-label">Closes At</label>
+                            <label for="closes_at_{{ week }}" class="form-label">Closes At (Pacific Time)</label>
                             <input type="datetime-local" class="form-control" id="closes_at_{{ week }}" name="closes_at"
-                                   value="{{ quizzes[week - 1].closes_at.strftime('%Y-%m-%dT%H:%M') if quizzes and week <= quizzes|length and quizzes[week - 1].closes_at else '' }}">
+                                   value="{{ quizzes[week - 1].closes_at | to_pacific if quizzes and week <= quizzes|length and quizzes[week - 1].closes_at else '' }}">
                         </div>
                     </div>
 
@@ -141,7 +141,7 @@
     </div>
     <div class="card-body">
         <ul class="mb-0">
-            <li><strong>Automatic Mode:</strong> Quiz visibility is controlled by Opens/Closes dates</li>
+            <li><strong>Automatic Mode:</strong> Quiz visibility is controlled by Opens/Closes dates (all times are Pacific Time)</li>
             <li><strong>Manual Mode:</strong> Check "Manually set as visible" to show the quiz immediately</li>
             <li><strong>Quiz Link:</strong> Paste the direct link from Microsoft Forms or Google Forms. Do NOT paste links from Teams messages (SafeLinks URLs won't work).</li>
             <li><strong>Winners:</strong> Enter names after quiz completion to display on public page</li>

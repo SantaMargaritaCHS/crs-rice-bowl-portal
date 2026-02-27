@@ -19,13 +19,13 @@
 
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="start_at" class="form-label">Start Date & Time</label>
+                    <label for="start_at" class="form-label">Start Date & Time (Pacific Time)</label>
                     <input type="datetime-local" class="form-control" id="start_at" name="start_at" required>
                     <small class="form-text text-muted">When should this announcement start appearing?</small>
                 </div>
 
                 <div class="col-md-6 mb-3">
-                    <label for="end_at" class="form-label">End Date & Time</label>
+                    <label for="end_at" class="form-label">End Date & Time (Pacific Time)</label>
                     <input type="datetime-local" class="form-control" id="end_at" name="end_at" required>
                     <small class="form-text text-muted">When should this announcement stop appearing?</small>
                 </div>
@@ -74,10 +74,10 @@
                             <div class="announcement-text">{{ announcement.text }}</div>
                         </td>
                         <td>
-                            <small>{{ announcement.start_at.strftime('%b %d, %Y %I:%M %p') if announcement.start_at else 'Not set' }}</small>
+                            <small>{{ announcement.start_at | to_pacific_display }}</small>
                         </td>
                         <td>
-                            <small>{{ announcement.end_at.strftime('%b %d, %Y %I:%M %p') if announcement.end_at else 'Not set' }}</small>
+                            <small>{{ announcement.end_at | to_pacific_display }}</small>
                         </td>
                         <td>
                             {% if announcement.enabled %}
@@ -128,7 +128,7 @@
     <div class="card-body">
         <ul class="mb-0">
             <li><strong>Announcement Text:</strong> Enter the message you want to display to students</li>
-            <li><strong>Start/End Dates:</strong> Set when the announcement should be visible (can overlap)</li>
+            <li><strong>Start/End Dates:</strong> Set when the announcement should be visible, in Pacific Time (can overlap)</li>
             <li><strong>Enable/Disable:</strong> Quickly turn announcements on/off without deleting them</li>
             <li><strong>Active Status:</strong> Green "Active Now" badge indicates announcements currently displayed on public page</li>
             <li><strong>Display Location:</strong> Announcements appear at the top of the home page in an alert banner</li>
@@ -155,12 +155,12 @@
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="edit_start_at" class="form-label">Start Date & Time</label>
+                            <label for="edit_start_at" class="form-label">Start Date & Time (Pacific Time)</label>
                             <input type="datetime-local" class="form-control" id="edit_start_at" name="start_at" required>
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label for="edit_end_at" class="form-label">End Date & Time</label>
+                            <label for="edit_end_at" class="form-label">End Date & Time (Pacific Time)</label>
                             <input type="datetime-local" class="form-control" id="edit_end_at" name="end_at" required>
                         </div>
                     </div>

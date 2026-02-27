@@ -7,6 +7,11 @@ import json
 import re
 from datetime import datetime
 from functools import wraps
+from zoneinfo import ZoneInfo
+
+PACIFIC = ZoneInfo('America/Los_Angeles')
+UTC = ZoneInfo('UTC')
+
 from flask import (
     Blueprint,
     render_template,
@@ -808,11 +813,17 @@ def get_announcement(announcement_id: int):
     announcement = Announcement.query.get(announcement_id)
     if not announcement:
         return jsonify({'error': 'Not found'}), 404
+    def _utc_to_pacific_str(dt):
+        if dt is None:
+            return ''
+        utc_dt = dt.replace(tzinfo=UTC)
+        return utc_dt.astimezone(PACIFIC).strftime('%Y-%m-%dT%H:%M')
+
     return jsonify({
         'id': announcement.id,
         'text': announcement.text,
-        'start_at': announcement.start_at.strftime('%Y-%m-%dT%H:%M') if announcement.start_at else '',
-        'end_at': announcement.end_at.strftime('%Y-%m-%dT%H:%M') if announcement.end_at else '',
+        'start_at': _utc_to_pacific_str(announcement.start_at),
+        'end_at': _utc_to_pacific_str(announcement.end_at),
         'enabled': announcement.enabled,
     })
 
@@ -966,17 +977,17 @@ def update_account():
 def _parse_datetime(dt_string: str) -> datetime:
     """
     Parse a datetime string from HTML datetime-local input.
+    Treats input as Pacific Time and converts to UTC for storage.
 
     Args:
         dt_string: String in format 'YYYY-MM-DDTHH:MM' or 'YYYY-MM-DD HH:MM'
 
     Returns:
-        datetime object
+        Naive datetime object in UTC
 
     Raises:
         ValueError: If string cannot be parsed
     """
-    # Try common formats
     formats = [
         '%Y-%m-%dT%H:%M',      # HTML datetime-local format
         '%Y-%m-%d %H:%M',       # Space-separated format
@@ -984,13 +995,21 @@ def _parse_datetime(dt_string: str) -> datetime:
         '%Y-%m-%d %H:%M:%S',    # With seconds, space-separated
     ]
 
+    naive_dt = None
     for fmt in formats:
         try:
-            return datetime.strptime(dt_string, fmt)
+            naive_dt = datetime.strptime(dt_string, fmt)
+            break
         except ValueError:
             continue
 
-    raise ValueError(f'Cannot parse datetime: {dt_string}')
+    if naive_dt is None:
+        raise ValueError(f'Cannot parse datetime: {dt_string}')
+
+    # Treat input as Pacific Time, convert to UTC for storage
+    pacific_dt = naive_dt.replace(tzinfo=PACIFIC)
+    utc_dt = pacific_dt.astimezone(UTC)
+    return utc_dt.replace(tzinfo=None)  # Store as naive UTC
 
 
 def _ensure_quizzes_exist() -> None:
