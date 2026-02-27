@@ -21,35 +21,15 @@
         </div>
     </div>
 
-    <!-- Online Alms Total -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <i class="bi bi-globe"></i> Online Alms Total
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <label for="online_alms_total" class="form-label">Amount ($)</label>
-                    <div class="input-group">
-                        <span class="input-group-text">$</span>
-                        <input type="number" class="form-control" id="online_alms_total" name="online_alms_total"
-                               step="0.01" min="0" value="{{ online_alms_total if online_alms_total else '0.00' }}">
-                    </div>
-                    <small class="form-text text-muted">Total donations received through online platform</small>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Upload Payment Export -->
     </form>
     <form method="POST" action="{{ url_for('admin_bp.upload_totals') }}" enctype="multipart/form-data" class="mb-4">
         <div class="card">
             <div class="card-header bg-warning text-dark">
-                <i class="bi bi-file-earmark-excel"></i> Upload Payment Export
+                <i class="bi bi-file-earmark-excel"></i> Upload Payment Export (Online Donations)
             </div>
             <div class="card-body">
-                <p class="mb-3">Upload a payment form export (<code>.xlsx</code>) to add donations to class totals. Amounts are <strong>added</strong> to existing totals.</p>
+                <p class="mb-3">Upload a payment form export (<code>.xlsx</code>) to add to the <strong>Online</strong> column. Amounts are <strong>added</strong> to existing online totals.</p>
                 <div class="row align-items-end">
                     <div class="col-md-8">
                         <label for="excel_file" class="form-label">Select Excel File</label>
@@ -91,9 +71,15 @@
                                     <i class="bi bi-sort-alpha-down"></i>
                                 </button>
                             </th>
-                            <th style="width: 250px;">
-                                Amount ($)
-                                <button type="button" class="btn btn-sm btn-link p-0 ms-1 sort-btn" data-sort="amount" data-order="desc" title="Sort by amount">
+                            <th style="width: 180px;">
+                                Online ($)
+                            </th>
+                            <th style="width: 180px;">
+                                Cash ($)
+                            </th>
+                            <th style="width: 140px;">
+                                Total ($)
+                                <button type="button" class="btn btn-sm btn-link p-0 ms-1 sort-btn" data-sort="total" data-order="desc" title="Sort by total">
                                     <i class="bi bi-sort-numeric-down-alt"></i>
                                 </button>
                             </th>
@@ -108,10 +94,26 @@
                             <td>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control"
-                                           name="class_{{ class.id }}_amount"
+                                    <input type="number" class="form-control online-input"
+                                           name="class_{{ class.id }}_online"
                                            step="0.01" min="0"
                                            value="{{ class.rice_bowl_amount if class.rice_bowl_amount else '0.00' }}">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control cash-input"
+                                           name="class_{{ class.id }}_cash"
+                                           step="0.01" min="0"
+                                           value="{{ class.cash_amount if class.cash_amount else '0.00' }}">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">$</span>
+                                    <input type="text" class="form-control row-total" readonly
+                                           value="{{ '%.2f' % class.total_amount }}">
                                 </div>
                             </td>
                         </tr>
@@ -119,12 +121,26 @@
                     </tbody>
                     <tfoot>
                         <tr class="table-active">
-                            <td><strong>Class Donations Total</strong></td>
+                            <td><strong>Subtotals</strong></td>
                             <td>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text">$</span>
-                                    <input type="text" class="form-control" id="rice_bowl_total_display"
-                                           value="{{ rice_bowl_total if rice_bowl_total else '0.00' }}" readonly>
+                                    <input type="text" class="form-control" id="online_total_display"
+                                           value="{{ '%.2f' % online_total }}" readonly>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">$</span>
+                                    <input type="text" class="form-control" id="cash_total_display"
+                                           value="{{ '%.2f' % cash_total }}" readonly>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">$</span>
+                                    <input type="text" class="form-control fw-bold" id="grand_total_display"
+                                           value="{{ '%.2f' % grand_total }}" readonly>
                                 </div>
                             </td>
                         </tr>
@@ -150,9 +166,9 @@
                 <div class="col-md-6">
                     <h3 class="mb-0">
                         <span class="text-muted">Total Raised:</span>
-                        <strong class="text-success">${{ grand_total if grand_total else '0.00' }}</strong>
+                        <strong class="text-success" id="grand_total_card">${{ '%.2f' % grand_total }}</strong>
                     </h3>
-                    <small class="text-muted">Online Alms + Class Donation Totals</small>
+                    <small class="text-muted">Online Donations + Cash Collected</small>
                 </div>
                 <div class="col-md-6">
                     <div class="form-check">
@@ -184,9 +200,10 @@
     </div>
     <div class="card-body">
         <ul class="mb-0">
-            <li><strong>Online Alms Total:</strong> Enter the total amount donated through the online CRS platform</li>
-            <li><strong>Class Donations:</strong> Enter the cash/check amounts collected by each class</li>
-            <li><strong>Grand Total:</strong> Automatically calculated as Online Alms + All Class Donations</li>
+            <li><strong>Online ($):</strong> Donations from the Excel payment export (use Upload above to add amounts)</li>
+            <li><strong>Cash ($):</strong> Cash/check amounts collected in class (enter manually)</li>
+            <li><strong>Total ($):</strong> Automatically calculated as Online + Cash per class</li>
+            <li><strong>Grand Total:</strong> Sum of all class totals (Online + Cash)</li>
             <li><strong>Visibility Toggle:</strong> Use the checkbox to show/hide the grand total on the public page</li>
             <li><strong>CRS Link:</strong> Update the donation link to direct students to your school's CRS donation page</li>
         </ul>
@@ -196,52 +213,71 @@
 
 {% block extra_js %}
 <script>
-    // Auto-calculate rice bowl total as user types
     document.addEventListener('DOMContentLoaded', function() {
         // Helper function to strip title prefixes for sorting
         function getSortName(name) {
             return name.replace(/^(Mr\.|Mrs\.|Ms\.)\s*/i, '').toLowerCase();
         }
 
-        const inputs = document.querySelectorAll('input[name^="class_"]');
-        const riceBowlTotal = document.getElementById('rice_bowl_total_display');
+        const onlineInputs = document.querySelectorAll('.online-input');
+        const cashInputs = document.querySelectorAll('.cash-input');
+        const onlineTotalDisplay = document.getElementById('online_total_display');
+        const cashTotalDisplay = document.getElementById('cash_total_display');
+        const grandTotalDisplay = document.getElementById('grand_total_display');
+        const grandTotalCard = document.getElementById('grand_total_card');
 
-        function updateRiceBowlTotal() {
-            let total = 0;
-            inputs.forEach(input => {
-                const value = parseFloat(input.value) || 0;
-                total += value;
+        function updateTotals() {
+            let onlineTotal = 0;
+            let cashTotal = 0;
+
+            // Update each row total
+            const rows = document.querySelectorAll('.table tbody tr');
+            rows.forEach(row => {
+                const online = parseFloat(row.querySelector('.online-input')?.value) || 0;
+                const cash = parseFloat(row.querySelector('.cash-input')?.value) || 0;
+                const rowTotal = row.querySelector('.row-total');
+                if (rowTotal) {
+                    rowTotal.value = (online + cash).toFixed(2);
+                }
+                onlineTotal += online;
+                cashTotal += cash;
             });
-            riceBowlTotal.value = total.toFixed(2);
+
+            const grandTotal = onlineTotal + cashTotal;
+            if (onlineTotalDisplay) onlineTotalDisplay.value = onlineTotal.toFixed(2);
+            if (cashTotalDisplay) cashTotalDisplay.value = cashTotal.toFixed(2);
+            if (grandTotalDisplay) grandTotalDisplay.value = grandTotal.toFixed(2);
+            if (grandTotalCard) grandTotalCard.textContent = '$' + grandTotal.toFixed(2);
         }
 
-        inputs.forEach(input => {
-            input.addEventListener('input', updateRiceBowlTotal);
-        });
+        onlineInputs.forEach(input => input.addEventListener('input', updateTotals));
+        cashInputs.forEach(input => input.addEventListener('input', updateTotals));
 
         // Search filter functionality
         const searchInput = document.getElementById('classSearch');
         const classCountDisplay = document.getElementById('classCount');
         const tableBody = document.querySelector('.table tbody');
-        const allRows = Array.from(tableBody.querySelectorAll('tr'));
-        const totalClasses = allRows.length;
+        if (tableBody) {
+            const allRows = Array.from(tableBody.querySelectorAll('tr'));
+            const totalClasses = allRows.length;
 
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            let visibleCount = 0;
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                let visibleCount = 0;
 
-            allRows.forEach(row => {
-                const className = row.querySelector('td strong').textContent.toLowerCase();
-                if (className.includes(searchTerm)) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
+                allRows.forEach(row => {
+                    const className = row.querySelector('td strong').textContent.toLowerCase();
+                    if (className.includes(searchTerm)) {
+                        row.style.display = '';
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                classCountDisplay.textContent = `${visibleCount} of ${totalClasses} classes`;
             });
-
-            classCountDisplay.textContent = `${visibleCount} of ${totalClasses} classes`;
-        });
+        }
 
         // Sorting functionality
         const sortButtons = document.querySelectorAll('.sort-btn');
@@ -251,12 +287,10 @@
                 const tbody = document.querySelector('.table tbody');
                 const rows = Array.from(tbody.querySelectorAll('tr'));
 
-                // Toggle order
                 const currentOrder = this.dataset.order;
                 const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
                 this.dataset.order = newOrder;
 
-                // Update icon
                 if (sortBy === 'name') {
                     this.querySelector('i').className = newOrder === 'asc' ? 'bi bi-sort-alpha-down' : 'bi bi-sort-alpha-up';
                 } else {
@@ -270,8 +304,9 @@
                         valB = getSortName(b.querySelector('td strong').textContent.trim());
                         return newOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
                     } else {
-                        valA = parseFloat(a.querySelector('input[name^="class_"]').value) || 0;
-                        valB = parseFloat(b.querySelector('input[name^="class_"]').value) || 0;
+                        // Sort by total (online + cash)
+                        valA = parseFloat(a.querySelector('.row-total')?.value) || 0;
+                        valB = parseFloat(b.querySelector('.row-total')?.value) || 0;
                         return newOrder === 'asc' ? valA - valB : valB - valA;
                     }
                 });

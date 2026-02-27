@@ -104,10 +104,10 @@ def dashboard():
             next_quiz = quiz
 
     # Calculate totals
-    online_total = float(Setting.get('online_alms_total', '0') or '0')
     classes = SchoolClass.query.order_by(SchoolClass.name).all()
-    rice_bowl_total = sum(c.rice_bowl_amount for c in classes)
-    grand_total = online_total + rice_bowl_total
+    online_total = sum(c.rice_bowl_amount for c in classes)
+    cash_total = sum(c.cash_amount for c in classes)
+    grand_total = online_total + cash_total
 
     # Get active announcements count
     active_announcements = Announcement.query.filter_by(enabled=True).count()
@@ -118,7 +118,7 @@ def dashboard():
         next_quiz=next_quiz,
         quizzes=quizzes,
         online_total=online_total,
-        rice_bowl_total=rice_bowl_total,
+        cash_total=cash_total,
         grand_total=grand_total,
         class_count=len(classes),
         active_announcements=active_announcements,
@@ -218,22 +218,23 @@ def update_quiz(week: int):
 @login_required
 def totals():
     """
-    Show CRS link, online total, and rice bowl totals by class.
+    Show CRS link and per-class donation totals (online + cash).
     """
     crs_link = Setting.get('crs_donation_link', '')
-    online_total = float(Setting.get('online_alms_total', '0') or '0')
     show_grand_total = Setting.get('show_grand_total', 'false') == 'true'
     classes = SchoolClass.query.order_by(SchoolClass.name).all()
-    rice_bowl_total = sum(c.rice_bowl_amount for c in classes)
+    online_total = sum(c.rice_bowl_amount for c in classes)
+    cash_total = sum(c.cash_amount for c in classes)
+    grand_total = online_total + cash_total
 
     return render_template(
         'admin/totals.html',
         crs_donation_link=crs_link,
-        online_alms_total=online_total,
         show_grand_total=show_grand_total,
         classes=classes,
-        rice_bowl_total=rice_bowl_total,
-        grand_total=online_total + rice_bowl_total,
+        online_total=online_total,
+        cash_total=cash_total,
+        grand_total=grand_total,
     )
 
 
@@ -241,37 +242,37 @@ def totals():
 @login_required
 def update_totals():
     """
-    Update CRS link and online total.
+    Update CRS link and per-class donation amounts (online + cash).
     """
     try:
         crs_link = request.form.get('crs_donation_link', '').strip()
-        online_total_str = request.form.get('online_alms_total', '0').strip()
-
-        # Validate online total
-        try:
-            online_total = float(online_total_str) if online_total_str else 0.0
-            if online_total < 0:
-                raise ValueError('Online total cannot be negative.')
-        except ValueError:
-            flash('Please enter a valid number for online total.', 'error')
-            return redirect(url_for('admin_bp.totals'))
-
         show_grand_total = request.form.get('show_grand_total') == 'true'
 
         Setting.set('crs_donation_link', crs_link)
-        Setting.set('online_alms_total', str(online_total))
         Setting.set('show_grand_total', 'true' if show_grand_total else 'false')
 
-        # Save individual class amounts
+        # Save individual class amounts (online + cash)
         classes = SchoolClass.query.all()
         for school_class in classes:
-            amount_key = f'class_{school_class.id}_amount'
-            amount_str = request.form.get(amount_key, '').strip()
-            if amount_str:
+            # Online amount (rice_bowl_amount)
+            online_key = f'class_{school_class.id}_online'
+            online_str = request.form.get(online_key, '').strip()
+            if online_str:
                 try:
-                    amount = float(amount_str)
+                    amount = float(online_str)
                     if amount >= 0:
                         school_class.rice_bowl_amount = amount
+                except ValueError:
+                    pass
+
+            # Cash amount
+            cash_key = f'class_{school_class.id}_cash'
+            cash_str = request.form.get(cash_key, '').strip()
+            if cash_str:
+                try:
+                    amount = float(cash_str)
+                    if amount >= 0:
+                        school_class.cash_amount = amount
                 except ValueError:
                     pass
         db.session.commit()

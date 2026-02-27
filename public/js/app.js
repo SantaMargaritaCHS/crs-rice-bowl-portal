@@ -84,9 +84,6 @@ function populatePage(data) {
   // Set CRS donation link on buttons
   setCRSLinks(data.settings?.crs_donation_link);
 
-  // Display online alms total
-  displayOnlineAlms(data.settings?.online_alms_total);
-
   // Display announcements
   displayAnnouncements(data.announcements || []);
 
@@ -113,8 +110,8 @@ function populatePage(data) {
   populateTop3Classes(data.classes || []);
 
   // Display totals
-  displayClassDonationsTotal(data.rice_bowl_total);
-  displayGrandTotal(data, data.settings?.show_grand_total);
+  displayClassDonationsTotal(data.grand_total);
+  displayGrandTotal(data);
 
   // Update thermometer
   updateThermometer(data.grand_total || 0);
@@ -145,25 +142,6 @@ function setCRSLinks(link) {
   });
 
   console.log(`🔗 Set CRS donation link on ${buttons.length} button(s)`);
-}
-
-/**
- * Display online alms total
- */
-function displayOnlineAlms(amount) {
-  const formatted = formatCurrency(parseFloat(amount) || 0);
-
-  // Update both online total displays
-  const elements = [
-    document.getElementById('online-total'),
-    document.getElementById('online-total-display')
-  ];
-
-  elements.forEach(el => {
-    if (el) el.textContent = formatted;
-  });
-
-  console.log(`💰 Online alms total: ${formatted}`);
 }
 
 /**
@@ -504,14 +482,14 @@ function populateLeaderboard(classes) {
     return;
   }
 
-  // Sort by rice_bowl_amount descending
+  // Sort by total_amount descending
   const sortedClasses = [...classes].sort((a, b) =>
-    (parseFloat(b.rice_bowl_amount) || 0) - (parseFloat(a.rice_bowl_amount) || 0)
+    (parseFloat(b.total_amount) || 0) - (parseFloat(a.total_amount) || 0)
   );
 
   sortedClasses.forEach((cls, index) => {
     const rank = index + 1;
-    const amount = parseFloat(cls.rice_bowl_amount) || 0;
+    const amount = parseFloat(cls.total_amount) || 0;
     const formattedAmount = formatCurrency(amount);
 
     let rankClass = '';
@@ -555,10 +533,9 @@ function populateLeaderboard(classes) {
 }
 
 /**
- * Display class donations total
+ * Display total donations (online + cash combined)
  */
 function displayClassDonationsTotal(amount) {
-  // Update both the leaderboard total and the totals section
   const elements = [
     document.getElementById('class-donations-total'),
     document.getElementById('class-donations-total-display')
@@ -570,7 +547,7 @@ function displayClassDonationsTotal(amount) {
     if (element) element.textContent = formatted;
   });
 
-  console.log(`💰 Class donations total: ${formatted}`);
+  console.log(`💰 Total donations: ${formatted}`);
 }
 
 /**
@@ -582,9 +559,9 @@ function populateTop3Classes(classes) {
     return;
   }
 
-  // Sort by amount descending
+  // Sort by total_amount descending
   const sortedClasses = [...classes].sort((a, b) =>
-    (parseFloat(b.rice_bowl_amount) || 0) - (parseFloat(a.rice_bowl_amount) || 0)
+    (parseFloat(b.total_amount) || 0) - (parseFloat(a.total_amount) || 0)
   );
 
   // Populate top 3
@@ -596,7 +573,7 @@ function populateTop3Classes(classes) {
     const amountEl = document.getElementById(`top-${rank}-amount`);
 
     if (nameEl) nameEl.textContent = cls.name || '--';
-    if (amountEl) amountEl.textContent = formatCurrency(parseFloat(cls.rice_bowl_amount) || 0);
+    if (amountEl) amountEl.textContent = formatCurrency(parseFloat(cls.total_amount) || 0);
   }
 
   console.log('🏆 Top 3 classes populated');
@@ -632,7 +609,7 @@ function updateThermometer(grandTotal) {
 /**
  * Display grand total (conditionally)
  */
-function displayGrandTotal(data, showGrandTotal) {
+function displayGrandTotal(data) {
   const container = document.getElementById('grand-total');
   const element = document.getElementById('grand-total-amount');
 
@@ -641,6 +618,7 @@ function displayGrandTotal(data, showGrandTotal) {
   // Check if we should show grand total
   const now = new Date();
   const cutoffDate = new Date(CONFIG.GRAND_TOTAL_CUTOFF_DATE);
+  const showGrandTotal = data.settings?.show_grand_total === 'true';
   const shouldShow = showGrandTotal || now >= cutoffDate;
 
   if (!shouldShow) {
@@ -649,16 +627,12 @@ function displayGrandTotal(data, showGrandTotal) {
     return;
   }
 
-  // Calculate grand total
-  const riceBowlTotal = parseFloat(data.rice_bowl_total) || 0;
-  const onlineAlms = parseFloat(data.settings?.online_alms_total) || 0;
-  const grandTotal = riceBowlTotal + onlineAlms;
-
+  const grandTotal = parseFloat(data.grand_total) || 0;
   const formatted = formatCurrency(grandTotal);
   element.textContent = formatted;
   container.style.display = 'block';
 
-  console.log(`💎 Grand total: ${formatted} (Rice Bowl: ${formatCurrency(riceBowlTotal)} + Online: ${formatCurrency(onlineAlms)})`);
+  console.log(`💎 Grand total: ${formatted}`);
 }
 
 /**

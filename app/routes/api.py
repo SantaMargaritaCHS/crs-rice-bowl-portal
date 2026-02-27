@@ -22,11 +22,12 @@ def get_data():
     Returns JSON with:
     - current_week: Current week number based on quiz schedules
     - quizzes: All quizzes with visibility, participants, winners
-    - classes: All school classes with rice bowl amounts
+    - classes: Per-class data with online_amount, cash_amount, total_amount
     - settings: Application settings
     - announcements: Active announcements
-    - rice_bowl_total: Sum of all class amounts
-    - grand_total: Online alms + rice bowl total
+    - online_total: Sum of all online donations
+    - cash_total: Sum of all cash collected
+    - grand_total: online_total + cash_total
     """
     try:
         # Get current week based on visible quizzes
@@ -77,7 +78,9 @@ def get_data():
             {
                 'id': cls.id,
                 'name': cls.name,
-                'rice_bowl_amount': cls.rice_bowl_amount
+                'online_amount': cls.rice_bowl_amount,
+                'cash_amount': cls.cash_amount,
+                'total_amount': cls.total_amount,
             }
             for cls in classes
         ]
@@ -85,7 +88,6 @@ def get_data():
         # Get settings with defaults
         settings = {
             'crs_donation_link': Setting.get('crs_donation_link', ''),
-            'online_alms_total': Setting.get('online_alms_total', '0.00'),
             'show_grand_total': Setting.get('show_grand_total', 'false'),
             'theme': Setting.get('theme', 'lenten-purple'),
             'school_logo_url': Setting.get('school_logo_url', ''),
@@ -105,14 +107,9 @@ def get_data():
         ]
 
         # Calculate totals
-        rice_bowl_total = sum(cls.rice_bowl_amount for cls in classes)
-
-        try:
-            online_alms = float(settings['online_alms_total'])
-        except (ValueError, TypeError):
-            online_alms = 0.0
-
-        grand_total = online_alms + rice_bowl_total
+        online_total = sum(cls.rice_bowl_amount for cls in classes)
+        cash_total = sum(cls.cash_amount for cls in classes)
+        grand_total = online_total + cash_total
 
         # Build response
         response = {
@@ -121,8 +118,9 @@ def get_data():
             'classes': class_data,
             'settings': settings,
             'announcements': active_announcements,
-            'rice_bowl_total': rice_bowl_total,
-            'grand_total': grand_total
+            'online_total': online_total,
+            'cash_total': cash_total,
+            'grand_total': grand_total,
         }
 
         # Add CORS headers for public access
@@ -143,14 +141,14 @@ def get_data():
             'classes': [],
             'settings': {
                 'crs_donation_link': '',
-                'online_alms_total': '0.00',
                 'show_grand_total': 'false',
                 'theme': 'lenten-purple',
                 'school_logo_url': '',
                 'enable_crs_imagery': 'true'
             },
             'announcements': [],
-            'rice_bowl_total': 0.0,
+            'online_total': 0.0,
+            'cash_total': 0.0,
             'grand_total': 0.0
         }
 

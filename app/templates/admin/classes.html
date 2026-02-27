@@ -69,7 +69,7 @@
                                    value="{{ class.name }}" data-class-id="{{ class.id }}">
                         </td>
                         <td>
-                            <span class="badge bg-success">${{ class.rice_bowl_amount if class.rice_bowl_amount else '0.00' }}</span>
+                            <span class="badge bg-success">${{ '%.2f' % class.total_amount }}</span>
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm class-actions">

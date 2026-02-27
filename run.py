@@ -52,6 +52,24 @@ with app.app_context():
             print(f"[STARTUP] Auto-seed failed: {e}", flush=True)
             db.session.rollback()
 
+    # One-time migration: add cash_amount column to school_classes
+    if not Setting.get('cash_amount_migration_done'):
+        print("[STARTUP] Running cash_amount column migration...", flush=True)
+        try:
+            from sqlalchemy import text, inspect
+            inspector = inspect(db.engine)
+            columns = [col['name'] for col in inspector.get_columns('school_classes')]
+            if 'cash_amount' not in columns:
+                db.session.execute(text('ALTER TABLE school_classes ADD COLUMN cash_amount FLOAT NOT NULL DEFAULT 0.0'))
+                db.session.commit()
+                print("[STARTUP] Added cash_amount column to school_classes", flush=True)
+            else:
+                print("[STARTUP] cash_amount column already exists", flush=True)
+            Setting.set('cash_amount_migration_done', 'true')
+        except Exception as e:
+            print(f"[STARTUP] cash_amount migration failed: {e}", flush=True)
+            db.session.rollback()
+
     # One-time migration: convert existing quiz/announcement datetimes
     # from Pacific Time (stored naively) to proper UTC.
     if not Setting.get('tz_migration_done'):

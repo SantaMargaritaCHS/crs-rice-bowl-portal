@@ -18,12 +18,12 @@
     </div>
 
     <!-- Quick Stats Cards -->
-    <div class="col-md-4 mb-4">
+    <div class="col-md-3 mb-4">
         <div class="card border-start border-primary border-4">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <h6 class="text-muted mb-1">Online Total</h6>
+                        <h6 class="text-muted mb-1">Online Donations</h6>
                         <h2 class="mb-0">${{ online_total|default(0)|round(2) }}</h2>
                     </div>
                     <div class="ms-3">
@@ -34,13 +34,13 @@
         </div>
     </div>
 
-    <div class="col-md-4 mb-4">
+    <div class="col-md-3 mb-4">
         <div class="card border-start border-success border-4">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <h6 class="text-muted mb-1">Class Donations Total</h6>
-                        <h2 class="mb-0">${{ rice_bowl_total|default(0)|round(2) }}</h2>
+                        <h6 class="text-muted mb-1">Cash Collected</h6>
+                        <h2 class="mb-0">${{ cash_total|default(0)|round(2) }}</h2>
                     </div>
                     <div class="ms-3">
                         <i class="bi bi-cash-stack text-success" style="font-size: 2.5rem;"></i>
@@ -50,7 +50,23 @@
         </div>
     </div>
 
-    <div class="col-md-4 mb-4">
+    <div class="col-md-3 mb-4">
+        <div class="card border-start border-warning border-4">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted mb-1">Grand Total</h6>
+                        <h2 class="mb-0">${{ grand_total|default(0)|round(2) }}</h2>
+                    </div>
+                    <div class="ms-3">
+                        <i class="bi bi-trophy text-warning" style="font-size: 2.5rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
         <div class="card border-start border-info border-4">
             <div class="card-body">
                 <div class="d-flex align-items-center">

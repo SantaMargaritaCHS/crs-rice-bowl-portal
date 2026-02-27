@@ -88,17 +88,23 @@ class Quiz(db.Model):
 
 
 class SchoolClass(db.Model):
-    """School class model for tracking Rice Bowl donations."""
+    """School class model for tracking donations (online from Excel + cash collected)."""
 
     __tablename__ = 'school_classes'
 
     id: int = db.Column(db.Integer, primary_key=True)
     name: str = db.Column(db.String(100), nullable=False, unique=True, index=True)
-    rice_bowl_amount: float = db.Column(db.Float, nullable=False, default=0.0)
+    rice_bowl_amount: float = db.Column(db.Float, nullable=False, default=0.0)  # Online donations (from Excel upload)
+    cash_amount: float = db.Column(db.Float, nullable=False, default=0.0)  # Cash collected in class
     created_at: datetime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
+    @property
+    def total_amount(self) -> float:
+        """Total donations = online (rice_bowl_amount) + cash."""
+        return (self.rice_bowl_amount or 0.0) + (self.cash_amount or 0.0)
+
     def __repr__(self) -> str:
-        return f'<SchoolClass {self.name}: ${self.rice_bowl_amount:.2f}>'
+        return f'<SchoolClass {self.name}: ${self.total_amount:.2f}>'
 
 
 class Setting(db.Model):
