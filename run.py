@@ -25,14 +25,35 @@ print("[STARTUP] Creating Flask app...", flush=True)
 app = create_app()
 print("[STARTUP] Flask app created successfully!", flush=True)
 
-# Log database state
+# Log database state and run migrations
 with app.app_context():
     from app.models import SchoolClass, Quiz, Setting, Announcement, db
+    from sqlalchemy import text, inspect
+
+    print(f"[STARTUP] Actual DB URI: {app.config['SQLALCHEMY_DATABASE_URI'][:60]}...", flush=True)
+
+    # One-time migration: add cash_amount column to school_classes
+    # MUST run before any SchoolClass ORM queries (model includes cash_amount)
+    if not Setting.get('cash_amount_migration_done'):
+        print("[STARTUP] Running cash_amount column migration...", flush=True)
+        try:
+            inspector = inspect(db.engine)
+            columns = [col['name'] for col in inspector.get_columns('school_classes')]
+            if 'cash_amount' not in columns:
+                db.session.execute(text('ALTER TABLE school_classes ADD COLUMN cash_amount FLOAT NOT NULL DEFAULT 0.0'))
+                db.session.commit()
+                print("[STARTUP] Added cash_amount column to school_classes", flush=True)
+            else:
+                print("[STARTUP] cash_amount column already exists", flush=True)
+            Setting.set('cash_amount_migration_done', 'true')
+        except Exception as e:
+            print(f"[STARTUP] cash_amount migration failed: {e}", flush=True)
+            db.session.rollback()
+
     class_count = SchoolClass.query.count()
     quiz_count = Quiz.query.count()
     print(f"[STARTUP] Classes in DB: {class_count}", flush=True)
     print(f"[STARTUP] Quizzes in DB: {quiz_count}", flush=True)
-    print(f"[STARTUP] Actual DB URI: {app.config['SQLALCHEMY_DATABASE_URI'][:60]}...", flush=True)
 
     # Auto-seed classes if database is empty
     if class_count == 0:
@@ -50,24 +71,6 @@ with app.app_context():
             print(f"[STARTUP] Auto-seeded {added} classes!", flush=True)
         except Exception as e:
             print(f"[STARTUP] Auto-seed failed: {e}", flush=True)
-            db.session.rollback()
-
-    # One-time migration: add cash_amount column to school_classes
-    if not Setting.get('cash_amount_migration_done'):
-        print("[STARTUP] Running cash_amount column migration...", flush=True)
-        try:
-            from sqlalchemy import text, inspect
-            inspector = inspect(db.engine)
-            columns = [col['name'] for col in inspector.get_columns('school_classes')]
-            if 'cash_amount' not in columns:
-                db.session.execute(text('ALTER TABLE school_classes ADD COLUMN cash_amount FLOAT NOT NULL DEFAULT 0.0'))
-                db.session.commit()
-                print("[STARTUP] Added cash_amount column to school_classes", flush=True)
-            else:
-                print("[STARTUP] cash_amount column already exists", flush=True)
-            Setting.set('cash_amount_migration_done', 'true')
-        except Exception as e:
-            print(f"[STARTUP] cash_amount migration failed: {e}", flush=True)
             db.session.rollback()
 
     # One-time migration: convert existing quiz/announcement datetimes
