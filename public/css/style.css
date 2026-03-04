@@ -461,12 +461,25 @@ strong {
   margin-bottom: 3rem;
 }
 
+.participant-counts-row {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+}
+
 .participant-count-widget {
   text-align: center;
-  padding: 1.5rem;
+  padding: 1.5rem 2rem;
   background: linear-gradient(135deg, var(--accent-purple), var(--secondary-purple));
   border-radius: 16px;
   margin-bottom: 2rem;
+  flex: 1;
+  max-width: 280px;
+}
+
+.participant-count-last-week {
+  background: linear-gradient(135deg, var(--secondary-purple), #4a2d6b);
+  opacity: 0.85;
 }
 
 .participant-label {
@@ -486,16 +499,8 @@ strong {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.participants-container h3,
 .quiz-winners h3 {
   margin-bottom: 1.5rem;
-}
-
-.participants-list {
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
 }
 
 .winners-list {

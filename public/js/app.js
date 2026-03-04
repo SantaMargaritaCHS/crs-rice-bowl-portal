@@ -100,8 +100,12 @@ function populatePage(data) {
     console.warn('⚠️ No current week quiz found');
   }
 
-  // Populate "Last Week's Winners" from the previous week's quiz
-  const lastWeekQuiz = data.quizzes?.find(q => q.week_number === data.current_week - 1 && q.is_visible);
+  // Populate last week's participant count and winners
+  const lastWeekQuiz = data.quizzes?.find(q => q.week_number === data.current_week - 1);
+  const lastWeekCountEl = document.getElementById('participant-count-last-week');
+  if (lastWeekCountEl) {
+    lastWeekCountEl.textContent = lastWeekQuiz ? (lastWeekQuiz.participant_count || 0) : 0;
+  }
   populateLastWeekWinners(lastWeekQuiz);
 
   // Build past weeks accordion
@@ -244,29 +248,10 @@ function populateQuizSection(quiz) {
     quizBtn.style.display = 'none';
   }
 
-  // Participant count
+  // Participant count (this week)
   const countElement = document.getElementById('participant-count');
   if (countElement) {
     countElement.textContent = quiz.participant_count || 0;
-  }
-
-  // Participant list
-  const listElement = document.getElementById('participants-list');
-  if (listElement) {
-    listElement.textContent = ''; // Clear existing
-
-    if (quiz.participants && quiz.participants.length > 0) {
-      quiz.participants.forEach(p => {
-        const li = document.createElement('li');
-        li.textContent = p;
-        listElement.appendChild(li);
-      });
-    } else {
-      const li = document.createElement('li');
-      li.className = 'no-data';
-      li.textContent = 'No participants yet';
-      listElement.appendChild(li);
-    }
   }
 
   console.log(`📝 Populated quiz section for Week ${quiz.week_number}`);
