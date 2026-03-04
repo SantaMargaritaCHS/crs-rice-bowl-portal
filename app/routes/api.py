@@ -169,8 +169,8 @@ def _determine_current_week() -> int:
     if not quizzes:
         return 1
 
-    # Find the first visible quiz
-    for quiz in quizzes:
+    # Find the latest (highest week number) visible quiz
+    for quiz in reversed(quizzes):
         if quiz.is_visible():
             return quiz.week_number
 
