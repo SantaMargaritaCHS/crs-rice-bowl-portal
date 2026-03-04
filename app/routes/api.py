@@ -111,6 +111,9 @@ def get_data():
         cash_total = sum(cls.cash_amount for cls in classes)
         grand_total = online_total + cash_total
 
+        # Calculate total quiz participants across all weeks
+        total_participants = sum(q['participant_count'] for q in quiz_data)
+
         # Build response
         response = {
             'current_week': current_week,
@@ -121,6 +124,7 @@ def get_data():
             'online_total': online_total,
             'cash_total': cash_total,
             'grand_total': grand_total,
+            'total_participants': total_participants,
         }
 
         # Add CORS headers for public access

@@ -106,6 +106,13 @@ function populatePage(data) {
   if (lastWeekCountEl) {
     lastWeekCountEl.textContent = lastWeekQuiz ? (lastWeekQuiz.participant_count || 0) : 0;
   }
+
+  // Populate total participants across all weeks
+  const totalCountEl = document.getElementById('participant-count-total');
+  if (totalCountEl) {
+    totalCountEl.textContent = data.total_participants || 0;
+  }
+
   populateLastWeekWinners(lastWeekQuiz);
 
   // Build past weeks accordion

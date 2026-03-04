@@ -482,6 +482,10 @@ strong {
   opacity: 0.85;
 }
 
+.participant-count-total {
+  background: linear-gradient(135deg, #b8860b, #daa520);
+}
+
 .participant-label {
   color: var(--white);
   font-size: 0.9rem;
