@@ -38,14 +38,17 @@ def get_data():
         quiz_data = []
 
         for quiz in quizzes:
-            # Parse participants (one per line)
+            # Parse participants (one per line, skip literal "None")
             participants = []
             if quiz.participants_text:
                 participants = [
                     line.strip()
                     for line in quiz.participants_text.split('\n')
-                    if line.strip()
+                    if line.strip() and line.strip().lower() != 'none'
                 ]
+
+            # Use stored count, but fall back to parsed list length
+            participant_count = quiz.participant_count or len(participants)
 
             # Parse winners (skip literal "None" values)
             winners = []
@@ -64,7 +67,7 @@ def get_data():
                 'opens_at': (quiz.opens_at.isoformat() + 'Z') if quiz.opens_at else None,
                 'closes_at': (quiz.closes_at.isoformat() + 'Z') if quiz.closes_at else None,
                 'is_visible': is_visible,
-                'participant_count': quiz.participant_count,
+                'participant_count': participant_count,
                 'participants': participants,
                 'winners': winners
             })
