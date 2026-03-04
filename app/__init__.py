@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, render_template
 from flask_login import LoginManager
 from app.config import Config
 from app.models import db, User
@@ -83,10 +83,34 @@ def create_app(config_class=Config) -> Flask:
         pacific_dt = utc_dt.astimezone(PACIFIC)
         return pacific_dt.strftime('%b %d, %Y %I:%M %p PT')
 
+    # Cache-busting helper: appends file mtime as query param
+    @app.context_processor
+    def cache_busting():
+        def static_url(filename):
+            filepath = Path(app.static_folder) / filename
+            try:
+                mtime = int(filepath.stat().st_mtime)
+            except OSError:
+                mtime = 0
+            return f'/{filename}?v={mtime}'
+        return dict(static_url=static_url)
+
+    # Set cache headers for static assets
+    @app.after_request
+    def add_cache_headers(response):
+        if response.content_type and any(
+            response.content_type.startswith(t)
+            for t in ('text/css', 'application/javascript', 'image/')
+        ):
+            response.headers['Cache-Control'] = 'public, max-age=31536000'
+        elif response.content_type and response.content_type.startswith('text/html'):
+            response.headers['Cache-Control'] = 'no-cache, must-revalidate'
+        return response
+
     # Serve index.html at root
     @app.route('/')
     def index():
-        return send_from_directory(app.static_folder, 'index.html')
+        return render_template('index.html')
 
     # Initialize database and create default admin user
     with app.app_context():
