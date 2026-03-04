@@ -483,7 +483,11 @@ strong {
 }
 
 .participant-count-total {
-  background: linear-gradient(135deg, #b8860b, #daa520);
+  background: linear-gradient(135deg, #1a5c2a, #2d8a4e);
+}
+
+.participant-count-total .participant-number {
+  color: var(--white);
 }
 
 .participant-label {
