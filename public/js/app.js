@@ -100,6 +100,10 @@ function populatePage(data) {
     console.warn('⚠️ No current week quiz found');
   }
 
+  // Populate "Last Week's Winners" from the previous week's quiz
+  const lastWeekQuiz = data.quizzes?.find(q => q.week_number === data.current_week - 1 && q.is_visible);
+  populateLastWeekWinners(lastWeekQuiz);
+
   // Build past weeks accordion
   buildPastWeeksAccordion(data.quizzes || [], data.current_week);
 
@@ -265,26 +269,30 @@ function populateQuizSection(quiz) {
     }
   }
 
-  // Winners
-  const winnersElement = document.getElementById('winners');
-  if (winnersElement) {
-    if (quiz.winners && quiz.winners.length > 0) {
-      winnersElement.textContent = ''; // Clear existing
-
-      quiz.winners.forEach((w, idx) => {
-        const li = document.createElement('li');
-        const medals = ['🥇', '🥈', '🥉', '🏅'];
-        li.textContent = `${medals[idx] || '🏅'} ${w}`;
-        winnersElement.appendChild(li);
-      });
-
-      winnersElement.parentElement.style.display = 'block';
-    } else {
-      winnersElement.parentElement.style.display = 'none';
-    }
-  }
-
   console.log(`📝 Populated quiz section for Week ${quiz.week_number}`);
+}
+
+/**
+ * Populate "Last Week's Winners" section from the previous week's quiz data
+ */
+function populateLastWeekWinners(lastWeekQuiz) {
+  const winnersElement = document.getElementById('winners');
+  if (!winnersElement) return;
+
+  if (lastWeekQuiz && lastWeekQuiz.winners && lastWeekQuiz.winners.length > 0) {
+    winnersElement.textContent = ''; // Clear existing
+
+    lastWeekQuiz.winners.forEach((w, idx) => {
+      const li = document.createElement('li');
+      const medals = ['🥇', '🥈', '🥉', '🏅'];
+      li.textContent = `${medals[idx] || '🏅'} ${w}`;
+      winnersElement.appendChild(li);
+    });
+
+    winnersElement.parentElement.style.display = 'block';
+  } else {
+    winnersElement.parentElement.style.display = 'none';
+  }
 }
 
 /**
