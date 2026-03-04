@@ -104,22 +104,28 @@
                     <h5 class="mb-3">Weekly Winners</h5>
 
                     <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label for="winner_1_{{ week }}" class="form-label">1st Place Winner</label>
+                        <div class="col-md-3 mb-3">
+                            <label for="winner_1_{{ week }}" class="form-label">Winner #1</label>
                             <input type="text" class="form-control" id="winner_1_{{ week }}" name="winner_1"
                                    value="{{ quizzes[week - 1].winner_1 if quizzes and week <= quizzes|length else '' }}">
                         </div>
 
-                        <div class="col-md-4 mb-3">
-                            <label for="winner_2_{{ week }}" class="form-label">2nd Place Winner</label>
+                        <div class="col-md-3 mb-3">
+                            <label for="winner_2_{{ week }}" class="form-label">Winner #2</label>
                             <input type="text" class="form-control" id="winner_2_{{ week }}" name="winner_2"
                                    value="{{ quizzes[week - 1].winner_2 if quizzes and week <= quizzes|length else '' }}">
                         </div>
 
-                        <div class="col-md-4 mb-3">
-                            <label for="winner_3_{{ week }}" class="form-label">3rd Place Winner</label>
+                        <div class="col-md-3 mb-3">
+                            <label for="winner_3_{{ week }}" class="form-label">Winner #3</label>
                             <input type="text" class="form-control" id="winner_3_{{ week }}" name="winner_3"
                                    value="{{ quizzes[week - 1].winner_3 if quizzes and week <= quizzes|length else '' }}">
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label for="winner_4_{{ week }}" class="form-label">Winner #4</label>
+                            <input type="text" class="form-control" id="winner_4_{{ week }}" name="winner_4"
+                                   value="{{ quizzes[week - 1].winner_4 if quizzes and week <= quizzes|length else '' }}">
                         </div>
                     </div>
 

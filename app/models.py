@@ -64,6 +64,7 @@ class Quiz(db.Model):
     winner_1: Optional[str] = db.Column(db.String(200), nullable=True)
     winner_2: Optional[str] = db.Column(db.String(200), nullable=True)
     winner_3: Optional[str] = db.Column(db.String(200), nullable=True)
+    winner_4: Optional[str] = db.Column(db.String(200), nullable=True)
     created_at: datetime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at: datetime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 

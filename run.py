@@ -50,6 +50,57 @@ with app.app_context():
             print(f"[STARTUP] cash_amount migration failed: {e}", flush=True)
             db.session.rollback()
 
+    # One-time migration: add winner_4 column to quizzes
+    if not Setting.get('winner4_migration_done'):
+        print("[STARTUP] Running winner_4 column migration...", flush=True)
+        try:
+            inspector = inspect(db.engine)
+            columns = [col['name'] for col in inspector.get_columns('quizzes')]
+            if 'winner_4' not in columns:
+                db.session.execute(text("ALTER TABLE quizzes ADD COLUMN winner_4 VARCHAR(200)"))
+                db.session.commit()
+                print("[STARTUP] Added winner_4 column to quizzes", flush=True)
+            else:
+                print("[STARTUP] winner_4 column already exists", flush=True)
+            Setting.set('winner4_migration_done', 'true')
+        except Exception as e:
+            print(f"[STARTUP] winner_4 migration failed: {e}", flush=True)
+            db.session.rollback()
+
+    # One-time fix: clean up winner data, set Week 1 visible, split combined winners
+    if not Setting.get('winner_cleanup_v2_done'):
+        print("[STARTUP] Cleaning up winner data (v2)...", flush=True)
+        try:
+            for quiz in Quiz.query.all():
+                changed = False
+                # Clean up literal "None" strings
+                for field in ['winner_1', 'winner_2', 'winner_3', 'winner_4']:
+                    val = getattr(quiz, field, None)
+                    if val and val.strip().lower() == 'none':
+                        setattr(quiz, field, None)
+                        changed = True
+                # Week 1: split "Tatum Brady & Griffon Yraceburn" into winner_3 and winner_4
+                if quiz.week_number == 1:
+                    if quiz.winner_3 and '&' in quiz.winner_3:
+                        parts = [p.strip() for p in quiz.winner_3.split('&')]
+                        if len(parts) == 2:
+                            quiz.winner_3 = parts[0]
+                            quiz.winner_4 = parts[1]
+                            changed = True
+                    # Set Week 1 to visible
+                    if not quiz.manual_visible:
+                        quiz.manual_visible = True
+                        quiz.schedule_mode = 'manual'
+                        changed = True
+                if changed:
+                    print(f"[STARTUP] Fixed quiz Week {quiz.week_number}", flush=True)
+            db.session.commit()
+            Setting.set('winner_cleanup_v2_done', 'true')
+            print("[STARTUP] Winner data cleanup v2 complete", flush=True)
+        except Exception as e:
+            print(f"[STARTUP] Winner cleanup v2 failed: {e}", flush=True)
+            db.session.rollback()
+
     class_count = SchoolClass.query.count()
     quiz_count = Quiz.query.count()
     print(f"[STARTUP] Classes in DB: {class_count}", flush=True)

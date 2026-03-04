@@ -47,14 +47,11 @@ def get_data():
                     if line.strip()
                 ]
 
-            # Parse winners
+            # Parse winners (skip literal "None" values)
             winners = []
-            if quiz.winner_1:
-                winners.append(quiz.winner_1)
-            if quiz.winner_2:
-                winners.append(quiz.winner_2)
-            if quiz.winner_3:
-                winners.append(quiz.winner_3)
+            for w in [quiz.winner_1, quiz.winner_2, quiz.winner_3, getattr(quiz, 'winner_4', None)]:
+                if w and w.strip().lower() != 'none':
+                    winners.append(w)
 
             # Determine visibility
             is_visible = quiz.is_visible()

@@ -196,6 +196,7 @@ def update_quiz(week: int):
         quiz.winner_1 = request.form.get('winner_1', '').strip() or None
         quiz.winner_2 = request.form.get('winner_2', '').strip() or None
         quiz.winner_3 = request.form.get('winner_3', '').strip() or None
+        quiz.winner_4 = request.form.get('winner_4', '').strip() or None
 
         db.session.commit()
         flash(f'Week {week} quiz updated successfully.', 'success')

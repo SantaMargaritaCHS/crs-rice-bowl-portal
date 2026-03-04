@@ -273,8 +273,8 @@ function populateQuizSection(quiz) {
 
       quiz.winners.forEach((w, idx) => {
         const li = document.createElement('li');
-        const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
-        li.textContent = `${medal} ${w}`;
+        const medals = ['🥇', '🥈', '🥉', '🏅'];
+        li.textContent = `${medals[idx] || '🏅'} ${w}`;
         winnersElement.appendChild(li);
       });
 
@@ -410,8 +410,8 @@ function buildPastWeeksAccordion(quizzes, currentWeek) {
 
       quiz.winners.forEach((w, idx) => {
         const li = document.createElement('li');
-        const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
-        li.textContent = `${medal} ${w}`;
+        const medals = ['🥇', '🥈', '🥉', '🏅'];
+        li.textContent = `${medals[idx] || '🏅'} ${w}`;
         winnersList.appendChild(li);
       });
 
