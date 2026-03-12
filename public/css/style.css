@@ -555,6 +555,18 @@ strong {
   box-shadow: 0 10px 30px var(--shadow-md);
 }
 
+.participants-text-display,
+.participants-text {
+  font-style: italic;
+  color: var(--text-dark);
+  opacity: 0.9;
+  margin: 0.75rem 0;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-left: 3px solid var(--gold-accent);
+  border-radius: 4px;
+}
+
 .participant-name {
   font-weight: 600;
   color: var(--primary-purple);

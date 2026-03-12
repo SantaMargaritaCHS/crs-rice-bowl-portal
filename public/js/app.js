@@ -261,6 +261,17 @@ function populateQuizSection(quiz) {
     countElement.textContent = quiz.participant_count || 0;
   }
 
+  // Participants text (display below quiz info)
+  const participantsTextEl = document.getElementById('participants-text');
+  if (participantsTextEl) {
+    if (quiz.participants && quiz.participants.length > 0) {
+      participantsTextEl.textContent = quiz.participants.join(', ');
+      participantsTextEl.style.display = 'block';
+    } else {
+      participantsTextEl.style.display = 'none';
+    }
+  }
+
   console.log(`📝 Populated quiz section for Week ${quiz.week_number}`);
 }
 
@@ -341,7 +352,7 @@ function buildPastWeeksAccordion(quizzes, currentWeek) {
   if (!container) return;
 
   const pastWeeks = quizzes
-    .filter(q => q.week_number < currentWeek && q.is_visible)
+    .filter(q => q.week_number < currentWeek && q.country_name)
     .sort((a, b) => b.week_number - a.week_number); // Most recent first
 
   if (pastWeeks.length === 0) {
@@ -395,6 +406,14 @@ function buildPastWeeksAccordion(quizzes, currentWeek) {
     participantsP.appendChild(strong);
     participantsP.appendChild(document.createTextNode(` ${quiz.participant_count || 0}`));
     statsDiv.appendChild(participantsP);
+
+    // Add participants text if present
+    if (quiz.participants && quiz.participants.length > 0) {
+      const participantsTextP = document.createElement('p');
+      participantsTextP.className = 'participants-text';
+      participantsTextP.textContent = quiz.participants.join(', ');
+      statsDiv.appendChild(participantsTextP);
+    }
 
     // Add winners if present
     if (quiz.winners && quiz.winners.length > 0) {

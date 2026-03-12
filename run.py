@@ -101,6 +101,13 @@ with app.app_context():
             print(f"[STARTUP] Winner cleanup v2 failed: {e}", flush=True)
             db.session.rollback()
 
+    # Ensure CRS donation link is set (Nelnet payment form)
+    current_link = Setting.get('crs_donation_link', '')
+    if not current_link:
+        Setting.set('crs_donation_link', 'https://payit.nelnet.net/form/Zh1D32av')
+        db.session.commit()
+        print("[STARTUP] Set CRS donation link to Nelnet payment form", flush=True)
+
     class_count = SchoolClass.query.count()
     quiz_count = Quiz.query.count()
     print(f"[STARTUP] Classes in DB: {class_count}", flush=True)
