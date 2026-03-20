@@ -108,6 +108,22 @@ with app.app_context():
         db.session.commit()
         print("[STARTUP] Set CRS donation link to Nelnet payment form", flush=True)
 
+    # One-time: add "Faculty Staff" class if it doesn't exist
+    if not Setting.get('faculty_staff_class_added'):
+        print("[STARTUP] Adding Faculty Staff class...", flush=True)
+        try:
+            existing = SchoolClass.query.filter_by(name='Faculty Staff').first()
+            if not existing:
+                db.session.add(SchoolClass(name='Faculty Staff', rice_bowl_amount=0.0))
+                db.session.commit()
+                print("[STARTUP] Added Faculty Staff class", flush=True)
+            else:
+                print("[STARTUP] Faculty Staff class already exists", flush=True)
+            Setting.set('faculty_staff_class_added', 'true')
+        except Exception as e:
+            print(f"[STARTUP] Faculty Staff class add failed: {e}", flush=True)
+            db.session.rollback()
+
     class_count = SchoolClass.query.count()
     quiz_count = Quiz.query.count()
     print(f"[STARTUP] Classes in DB: {class_count}", flush=True)

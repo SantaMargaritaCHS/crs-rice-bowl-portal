@@ -120,6 +120,9 @@ ALL_CLASSES = [
 
     # Mr. Visconti - Period 2
     "Mr. Visconti's Period 2",
+
+    # === SPECIAL GROUPS ===
+    "Faculty Staff",
 ]
 
 

@@ -613,14 +613,20 @@ function updateThermometer(grandTotal) {
   totalElement.textContent = formatCurrency(amount);
 
   // Calculate fill percentage (cap at 100%)
-  // Using a goal of $5,000 for visual scaling
-  const maxForVisual = 5000;
+  // Goal: $4,000
+  const maxForVisual = 4000;
   const fillPercent = Math.min((amount / maxForVisual) * 100, 100);
 
   // Animate the fill
   setTimeout(() => {
     fillElement.style.height = `${Math.max(fillPercent, 5)}%`; // Minimum 5% so bulb looks connected
   }, 500);
+
+  // Update goal label
+  const goalLabel = document.getElementById('thermometer-goal');
+  if (goalLabel) {
+    goalLabel.textContent = '$4,000';
+  }
 
   console.log(`🌡️ Thermometer: ${formatCurrency(amount)} (${fillPercent.toFixed(1)}% fill)`);
 }
